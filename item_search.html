@@ -8,16 +8,6 @@
   <link rel="stylesheet" href="./assets/global.css">
   <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
   <style>
-    /* textarea { width: 100%; height: 80px; 
-      background-color: var(--bg2);
-    } */
-    /* table { border-collapse: collapse; width: 100%; margin-top: 12px; }
-    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; } */
-    /* #dropzone { 
-      border: 2px dashed #aaa; padding: 18px; text-align:center; margin-bottom:12px; 
-      color:#666; 
-    } */
-
     main {
       display: flex;
       flex-direction: column;
@@ -82,12 +72,14 @@
   </style>
 </head>
 <body>
+
+
+
+
   <main>
     <a target="_blank"  href="./index.html"><h1>GGS</h1></a>
-    <!-- <h2>Item Shortcode Search (CSV import)</h2> -->
 
     <div>
-      <!-- <button id="searchBtn">Search</button> -->
       <button id="clearBtn">Clear</button>
     </div>
     <section>
@@ -99,16 +91,17 @@
           <label class="muted" style="display:block;margin:8px 0px">Enter shortcodes (comma, newline or space separated)</label>
         </div>
       </div>
-      <!-- <div id="output"></div> -->
       <ul id="output"></ul>
     </section>
   </main>
-  <script>
-    let allItems = []; // loaded dataset
 
-    // --- CSV loading with D3 ---
+
+
+
+
+  <script>
+    let allItems = [];
     const fileInput = document.getElementById('fileInput');
-    // const dropzone = document.getElementById('dropzone');
 
     function normalizeHeaders(row) {
       const normalized = {};
@@ -150,16 +143,6 @@
       if (f) loadCsvFile(f);
     });
 
-    // // drag/drop
-    // dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#666'; });
-    // dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = '#aaa'; });
-    // dropzone.addEventListener('drop', (e) => {
-    //   e.preventDefault();
-    //   dropzone.style.borderColor = '#aaa';
-    //   const f = e.dataTransfer.files[0];
-    //   if (f) loadCsvFile(f);
-    // });
-
     // --- search logic ---
     function parseSearchList(text) {
       return text
@@ -183,40 +166,6 @@
       return results;
     }
 
-    // function renderTable(rows) {
-    //   if (!rows.length) return '<p>No results</p>';
-    //   const headers = ['item_id', 'short_code', 'parent_item'];
-    //   let html = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
-    //   for (const r of rows) {
-    //     html += '<tr>' + headers.map(h => `<td>${(r[h] ?? '')}</td>`).join('') + '</tr>';
-    //   }
-    //   html += '</tbody></table>';
-    //   return html;
-    // }
-    // document.getElementById('searchBtn').addEventListener('click', () => {
-    //   const raw = document.getElementById('input').value;
-    //   const list = parseSearchList(raw);
-    //   const out = document.getElementById('output');
-    //   try {
-    //     const res = searchItems(list);
-    //     out.innerHTML = renderTable(res);
-    //   } catch (err) {
-    //     out.innerHTML = `<p class="error">${err.message}</p>`;
-    //   }
-    // });
-
-    // function renderItemIdsText(rows) {
-    //   if (!rows.length) return 'No results';
-    //   // unique preserve order
-    //   const seen = new Set();
-    //   const ids = [];
-    //   for (const r of rows) {
-    //     const id = String(r.item_id ?? '').trim();
-    //     if (id && !seen.has(id)) { seen.add(id); ids.push(id); }
-    //   }
-    //   return ids.join('\n');
-    // }
-
     function debounce(fn, wait = 300) {
       let t;
       return (...args) => {
@@ -225,29 +174,6 @@
       };
     }
 
-    // document.getElementById('searchBtn').addEventListener('click', () => {
-    //   const raw = document.getElementById('input').value;
-    //   const list = parseSearchList(raw);
-    //   const out = document.getElementById('output');
-    //   try {
-    //     const res = searchItems(list);
-    //     const text = renderItemIdsText(res);
-    //     out.innerHTML = `
-    //       <div>
-    //         <textarea id="idsArea" style="width:100%;height:160px;">${text}</textarea>
-    //         <div style="margin-top:8px">
-    //           <button id="copyBtn">Copy</button>
-    //         </div>
-    //       </div>`;
-    //     document.getElementById('copyBtn').addEventListener('click', () => {
-    //       const ta = document.getElementById('idsArea');
-    //       ta.select();
-    //       document.execCommand('copy');
-    //     });
-    //   } catch (err) {
-    //     out.innerHTML = `<p class="error">${err.message}</p>`;
-    //   }
-    // });
 
     const doSearchAndRender = () => {
       const raw = document.getElementById('input').value;
@@ -260,25 +186,6 @@
       try {
         const ids = searchItems(list);
         console.log(ids)
-        // const text = renderItemIdsText(ids);
-        // out.innerHTML = `
-        //   <div>
-        //     <textarea id="idsArea" style="width:100%;height:160px;">${text}</textarea>
-        //     <div style="margin-top:8px">
-        //       <button id="copyBtn">Copy</button>
-        //     </div>
-        //   </div>`;
-
-        // document.getElementById('copyBtn').addEventListener('click', () => {
-        //   const ta = document.getElementById('idsArea');
-        //   ta.select();
-        //   document.execCommand('copy');
-        // });
-
-        // out.innerHTML = `
-        //   <div>
-        //     <div id="idsArea">${text}</div>
-        //   </div>`;
         out.innerHTML = "";
         ids.forEach(id => {
           li = document.createElement("li")
