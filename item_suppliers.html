@@ -84,7 +84,9 @@ h2 {
 /* .item_supplier{
     width: 500px;
 } */
-
+#instructions {
+    width: 200px;
+}
 </style>
 </head>
 
@@ -98,7 +100,11 @@ h2 {
                 <button onclick="clearSearch()">clear</button>
             </div>
             <textarea id="searchInput"></textarea>
-            <input type="file" id="fileInput" accept=".csv" style="display: block;"/>
+            <div id="instructions">
+                <input type="file" id="fileInput" accept=".csv" style="display: block;"/>
+                <div class="muted">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Finance/Active%20Item%20Suppliers">this SQL report</a> as a CSV and import into this page using the choose file input above.</div>
+                <label class="muted" style="display:block;margin:8px 0px">Enter item ids (newline separated)</label>
+            </div>
         </div>
         <div id="output"></div>
     </section>
