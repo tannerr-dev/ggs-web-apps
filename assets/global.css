@@ -7,6 +7,8 @@
     --bottom-height: 400px;
 }
 
+.muted { color:#666; font-size:0.9em; }
+.error { color: #b00; }
 @media (prefers-color-scheme: light) {
     :root{
         --bg:hsl(20, 10%, 94%);
