@@ -1,0 +1,295 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>search items</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  
+  <link rel="stylesheet" href="./assets/global.css">
+  <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
+  <style>
+    /* textarea { width: 100%; height: 80px; 
+      background-color: var(--bg2);
+    } */
+    /* table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; } */
+    /* #dropzone { 
+      border: 2px dashed #aaa; padding: 18px; text-align:center; margin-bottom:12px; 
+      color:#666; 
+    } */
+
+    main {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .muted { color:#666; font-size:0.9em; }
+    .error { color: #b00; }
+
+    input[type="file"]::file-selector-button {
+      border: 1px solid var(--bg2);
+      border-radius: 4px;      
+      background-color: var(--bg2);
+      color: var(--fg);
+      margin: 0px 4px 8px 0px;
+    }
+
+    button {
+      border: 1px solid var(--bg2);
+      border-radius: 4px;    
+      width: 204px;
+      background-color: var(--bg2);
+      color: var(--fg);
+      margin-bottom: 8px;
+    }
+
+    textarea {
+        height: 400px;
+        width: 200px;
+        /* padding: 2px; */
+        border-width: 0;
+        background-color: var(--bg2);
+        color: var(--fg);
+        border-radius: 4px;
+        scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+        /* scrollbar-width: thin; */
+        /* scrollbar-gutter: stable both-edges; */
+        resize:none;  
+        margin: 0px 32px 0px 0px;
+    }
+    
+    section{
+      display: flex;
+      flex-direction: row;
+    }
+
+    p {
+      margin:0px 0px 8px 0px;
+    }
+    #output {
+      margin:0px;
+    }
+    ul {
+        list-style-type: none;
+        padding: 0px;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a target="_blank"  href="./index.html"><h1>GGS</h1></a>
+    <!-- <h2>Item Shortcode Search (CSV import)</h2> -->
+
+    <input id="fileInput" type="file" accept=".csv" />
+    <div class="muted">Export CSV from <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/All%20Active%20Items">this SQL report</a> and import into this page to use the search function below.</div>
+    <label style="display:block;margin:8px 0px">Enter shortcodes (comma, newline or space separated):</label>
+    <div>
+      <!-- <button id="searchBtn">Search</button> -->
+      <button id="clearBtn">Clear</button>
+    </div>
+    <section>
+      <textarea id="input"></textarea>
+      <!-- <div id="output"></div> -->
+      <ul id="output"></ul>
+    </section>
+  </main>
+  <script>
+    let allItems = []; // loaded dataset
+
+    // --- CSV loading with D3 ---
+    const fileInput = document.getElementById('fileInput');
+    // const dropzone = document.getElementById('dropzone');
+
+    function normalizeHeaders(row) {
+      const normalized = {};
+      for (const key in row) {
+        normalized[key.trim().toLowerCase()] = row[key];
+      }
+      // ensure keys exist
+      return {
+        item_id: normalized['item_id'] ?? normalized['id'] ?? '',
+        short_code: normalized['short_code'] ?? normalized['shortcode'] ?? normalized['sku'] ?? '',
+        parent_item: normalized['parent_item'] ?? normalized['parentitem'] ?? normalized['parent'] ?? ''
+      };
+    }
+
+    function loadCsvFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target.result;
+        try {
+          const parsed = d3.csvParse(text);
+          allItems = parsed.map(r => {
+            const n = normalizeHeaders(r);
+            return {
+              item_id: String(n.item_id).trim(),
+              short_code: String(n.short_code).trim(),
+              parent_item: n.parent_item === undefined ? '' : String(n.parent_item).trim()
+            };
+          });
+          // document.getElementById('output').innerHTML = `<p>Loaded ${allItems.length} rows.</p>`;
+        } catch (err) {
+          document.getElementById('output').innerHTML = `<p class="error">CSV parse error: ${err.message}</p>`;
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    fileInput.addEventListener('change', (ev) => {
+      const f = ev.target.files[0];
+      if (f) loadCsvFile(f);
+    });
+
+    // // drag/drop
+    // dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.style.borderColor = '#666'; });
+    // dropzone.addEventListener('dragleave', () => { dropzone.style.borderColor = '#aaa'; });
+    // dropzone.addEventListener('drop', (e) => {
+    //   e.preventDefault();
+    //   dropzone.style.borderColor = '#aaa';
+    //   const f = e.dataTransfer.files[0];
+    //   if (f) loadCsvFile(f);
+    // });
+
+    // --- search logic ---
+    function parseSearchList(text) {
+      return text
+        .split(/[\s,]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    function searchItems(searchList) {
+      if (!allItems.length) throw new Error('No CSV loaded');
+      // reduce dataset to needed columns (preserve strings)
+      const reduced = allItems.map(({ item_id, short_code, parent_item }) => ({ item_id, short_code, parent_item }));
+      const results = [];
+      for (const token of searchList) {
+        const matches = reduced.filter(r => r.short_code === token);
+        if (matches.length === 0) {
+          throw new Error(`${token} ITEM NOT FOUND`);
+        }
+        results.push(...matches);
+      }
+      return results;
+    }
+
+    // function renderTable(rows) {
+    //   if (!rows.length) return '<p>No results</p>';
+    //   const headers = ['item_id', 'short_code', 'parent_item'];
+    //   let html = '<table><thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead><tbody>';
+    //   for (const r of rows) {
+    //     html += '<tr>' + headers.map(h => `<td>${(r[h] ?? '')}</td>`).join('') + '</tr>';
+    //   }
+    //   html += '</tbody></table>';
+    //   return html;
+    // }
+    // document.getElementById('searchBtn').addEventListener('click', () => {
+    //   const raw = document.getElementById('input').value;
+    //   const list = parseSearchList(raw);
+    //   const out = document.getElementById('output');
+    //   try {
+    //     const res = searchItems(list);
+    //     out.innerHTML = renderTable(res);
+    //   } catch (err) {
+    //     out.innerHTML = `<p class="error">${err.message}</p>`;
+    //   }
+    // });
+
+    // function renderItemIdsText(rows) {
+    //   if (!rows.length) return 'No results';
+    //   // unique preserve order
+    //   const seen = new Set();
+    //   const ids = [];
+    //   for (const r of rows) {
+    //     const id = String(r.item_id ?? '').trim();
+    //     if (id && !seen.has(id)) { seen.add(id); ids.push(id); }
+    //   }
+    //   return ids.join('\n');
+    // }
+
+    function debounce(fn, wait = 300) {
+      let t;
+      return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(() => fn(...args), wait);
+      };
+    }
+
+    // document.getElementById('searchBtn').addEventListener('click', () => {
+    //   const raw = document.getElementById('input').value;
+    //   const list = parseSearchList(raw);
+    //   const out = document.getElementById('output');
+    //   try {
+    //     const res = searchItems(list);
+    //     const text = renderItemIdsText(res);
+    //     out.innerHTML = `
+    //       <div>
+    //         <textarea id="idsArea" style="width:100%;height:160px;">${text}</textarea>
+    //         <div style="margin-top:8px">
+    //           <button id="copyBtn">Copy</button>
+    //         </div>
+    //       </div>`;
+    //     document.getElementById('copyBtn').addEventListener('click', () => {
+    //       const ta = document.getElementById('idsArea');
+    //       ta.select();
+    //       document.execCommand('copy');
+    //     });
+    //   } catch (err) {
+    //     out.innerHTML = `<p class="error">${err.message}</p>`;
+    //   }
+    // });
+
+    const doSearchAndRender = () => {
+      const raw = document.getElementById('input').value;
+      const list = parseSearchList(raw);
+      const out = document.getElementById('output');
+      if (!list.length) {
+        out.innerHTML = '';
+        return;
+      }
+      try {
+        const ids = searchItems(list);
+        console.log(ids)
+        // const text = renderItemIdsText(ids);
+        // out.innerHTML = `
+        //   <div>
+        //     <textarea id="idsArea" style="width:100%;height:160px;">${text}</textarea>
+        //     <div style="margin-top:8px">
+        //       <button id="copyBtn">Copy</button>
+        //     </div>
+        //   </div>`;
+
+        // document.getElementById('copyBtn').addEventListener('click', () => {
+        //   const ta = document.getElementById('idsArea');
+        //   ta.select();
+        //   document.execCommand('copy');
+        // });
+
+        // out.innerHTML = `
+        //   <div>
+        //     <div id="idsArea">${text}</div>
+        //   </div>`;
+        out.innerHTML = "";
+        ids.forEach(id => {
+          li = document.createElement("li")
+          li.textContent = id.item_id
+          out.appendChild(li)
+        });
+      } catch (err) {
+        out.innerHTML = `<p class="error">${err.message}</p>`;
+      }
+    };
+
+    const debouncedSearch = debounce(doSearchAndRender, 250);
+    document.getElementById('input').addEventListener('input', debouncedSearch);
+
+    document.getElementById('clearBtn').addEventListener('click', () => {
+      document.getElementById('input').value = '';
+      document.getElementById('output').innerHTML = '';
+    });
+  </script>
+</body>
+</html>
