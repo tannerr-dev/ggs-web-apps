@@ -1,8 +1,22 @@
-html {
+:root {
     --bg: hsl(0, 2%, 9%);
     --bg2: hsl(60, 1%, 28%);
     --bg3: hsl(43, 6%, 48%);
     --fg: hsl(12, 98%, 98%);
+    --bottom-width: 471px;
+    --bottom-height: 400px;
+}
+
+@media (prefers-color-scheme: light) {
+    :root{
+        --bg:hsl(20, 10%, 94%);
+        --bg2:hsl(36, 4%, 78%);
+        --fg:hsl(0, 2%, 9%);
+        --fg2:hsl(0, 2%, 26%);
+    }
+}
+
+html {
     background-color: var(--bg);
     color: var(--fg);
     font-family: Arial, Helvetica, sans-serif;
