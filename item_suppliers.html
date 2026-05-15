@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
+    <link rel="stylesheet" href="./assets/global.css">
+    <script src="./assets/d3.js"></script>
+    <!-- <script src="plot.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/d3@7"></script> -->
+    
+    <title>suppliers</title>
+
+<style>
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+section {
+    display: flex;
+    flex-direction: row;
+}
+
+input {
+    width:200px;
+}
+
+input[type="file"]::file-selector-button {
+    border: 1px solid var(--bg2);
+    border-radius: 4px;      
+    background-color: var(--bg2);
+    color: var(--fg);
+}
+
+textarea {
+    height: 400px;
+    width: 200px;
+    /* padding: 2px; */
+    border-width: 0;
+    background-color: var(--bg2);
+    color: var(--fg);
+    border-radius: 4px;
+    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+    /* scrollbar-width: thin; */
+    /* scrollbar-gutter: stable both-edges; */
+    resize:none;  
+}
+
+button {
+    border: 1px solid var(--bg2);
+    border-radius: 4px;    
+    width: 204px;
+    background-color: var(--bg2);
+    color: var(--fg);
+}
+
+ul {
+    margin: 18px 0px 0px 0px;
+    padding: 0px;
+}
+
+table td, table th { 
+    padding: 0px 0px 0px 16px; 
+    font-size: 14px;
+
+}
+
+button {
+    margin-bottom:4px;
+}
+
+h2 {
+    font-size: 16px;
+    margin:4px;
+}
+
+.item_id {
+    width: 160px;
+}
+
+.item_cost{
+    width: 50px;
+}
+
+/* .item_supplier{
+    width: 500px;
+} */
+
+</style>
+</head>
+
+<body>
+    
+<main>
+    <a target="_blank"  href="./index.html"><h1>GGS</h1></a>
+    <section>
+        <div>
+            <div style="margin-bottom: 2px;">
+                <input type="file" id="fileInput" accept=".csv" />
+                <br>
+                <br>
+                <!-- <label for="searchInput">Search for Item IDs: </label>
+                <input type="text" id="searchInput" placeholder="Search..." /> -->
+                <button onclick="clearSearch()">clear</button>
+            </div>
+            <textarea id="searchInput"></textarea>
+        </div>
+        <div id="output"></div>
+    </section>
+</main>
+
+
+<script>
+
+let output = document.querySelector("#output")
+output.innerText = "No Data -- import csv"
+
+function clearSearch() {
+    document.getElementById("searchInput").value = ""
+    console.log('hello')
+    output.innerHTML = ""
+}
+
+
+let itemData = [];
+let uniqueItems = [];
+
+// Handle file input change
+d3.select('#fileInput').on('change', function () {
+    const file = this.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            const content = e.target.result;
+            itemData = d3.csvParse(content, d => ({
+                item_id: d.item_id,
+                supplier_name: d.supplier_name,
+                cost: d.cost
+            }));
+        };
+        reader.readAsText(file);
+        output.innerText = "Data Loaded -- paste item_id in text area"
+    }
+});
+
+// Handle search input
+d3.select("#searchInput").on("input", function () {
+    const searchInput = d3.select("#searchInput").property("value");
+    const rawValues = searchInput.split("\n").map(s => s.trim()).filter(Boolean);
+    output.innerHTML = ""  
+    // remove duplicates but keep first occurrence order
+    const seen = new Set();
+    const searchValues = [];
+    for (const v of rawValues) {
+        if (!seen.has(v)) {
+            seen.add(v);
+            searchValues.push(v);
+        }
+    }
+
+    const itemList = d3.select("#output");
+    itemList.selectAll("*").remove();
+
+    searchValues.forEach(itemId => {
+        const rows = itemData.filter(d => d.item_id === itemId);
+        if (rows.length === 0) return;
+
+        const itemLi = d3.create('ul').node();
+        // itemLi.appendChild(d3.create('h2').text(itemId).node());
+
+        const table = d3.create('table');
+        const tbody = table.append('tbody');
+        tbody.selectAll('tr')
+            .data(rows)
+            .enter()
+            .append('tr')
+            .html(d => `<td class="item_id">${itemId}</td><td class="item_cost">${d.cost}</td><td class="item_supplier">${d.supplier_name}</td>`);
+
+        itemLi.appendChild(table.node());
+        itemList.node().appendChild(itemLi);
+    });
+
+    console.log(searchValues)
+
+});
+</script>
+</body>
+</html>

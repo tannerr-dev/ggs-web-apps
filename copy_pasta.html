@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>copy pasta</title>
+    <link rel="stylesheet" href="./assets/global.css">
+    <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
+  <style>
+    main {
+      display: flex;
+      flex-direction: column;
+    }
+
+    button { 
+        width: 199px; 
+    }
+
+    .clip-box { 
+        display:flex; 
+        width:100%; 
+        gap:8px; 
+        margin-bottom:10px; 
+    }
+
+    .clip-box > textarea{ 
+        background-color: var(--bg2);
+        color: var(--fg);
+        border-radius:4px; 
+        border: var(--bg2) 1px solid;
+        padding:2px; 
+        width: 394px;
+        scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+        /* scrollbar-width: thin; */
+        scrollbar-gutter: stable both-edges;
+        resize:none;
+    }
+
+    .clip-box>button{ 
+        background-color: var(--bg2);
+        color: var(--fg);
+        border-radius: 4px;
+        border: var(--bg2) 1px solid;
+        width: 199px;
+    }
+
+    .clip-box > button:hover {
+        background-color: var(--bg3);
+    }
+    
+    .clip-box > button:active {
+        background-color: var(--bg);
+    }
+
+    .clear-button, .adjust-button { 
+            margin: 0px 0px 8px 0; 
+            background-color: var(--bg2);
+            color: var(--fg);
+            border-radius: 4px;
+            border: var(--bg2) 1px solid;
+    }
+
+    .clear-button:hover, .adjust-button:hover {
+        background-color: var(--bg3);
+    }
+
+    .clear-button:active, .adjust-button:active {
+        background-color: var(--bg);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a target="_blank"  href="./index.html"><h1>GGS</h1></a>
+
+    <!-- Controls now exist in static HTML above the text areas -->
+    <div id="controls">
+      <div id="adjustContainer">
+        <button id="clearAllBtn" class="clear-button">Clear All Values</button>
+        <button id="decreaseBtn" class="adjust-button">-</button>
+        <button id="increaseBtn" class="adjust-button">+</button>
+      </div>
+    </div>
+
+    <copy-pasta-tool id="copyPasta"></copy-pasta-tool>
+  </main>
+
+  <script>
+    class CopyPastaTool extends HTMLElement {
+      constructor() {
+        super();
+        this.counter = this.loadCounter();
+        this.container = document.createElement('div');
+        this.appendChild(this.container);
+        this.setupControls();
+        this.renderTextareas();
+      }
+
+      connectedCallback() {
+        // No-op: constructor already set up
+      }
+
+      loadCounter() {
+        return parseInt(localStorage.getItem('textAreaCount')) || 1;
+      }
+
+      setupControls() {
+        // Wire static DOM buttons (they are present in page)
+        const increase = document.getElementById('increaseBtn');
+        const decrease = document.getElementById('decreaseBtn');
+        const clearAll = document.getElementById('clearAllBtn');
+
+        if (increase) increase.addEventListener('click', () => this.adjustCounter(1));
+        if (decrease) decrease.addEventListener('click', () => this.adjustCounter(-1));
+        if (clearAll) clearAll.addEventListener('click', () => this.clearAllValues());
+      }
+
+      renderTextareas() {
+        this.container.innerHTML = '';
+        for (let i = 1; i <= this.counter; i++) {
+          const clipBox = document.createElement('div');
+          clipBox.className = 'clip-box';
+
+          const btn = document.createElement('button');
+          btn.textContent = 'Copy to Clipboard';
+          btn.addEventListener('click', () => this.copyToClipboard(i));
+
+          const textarea = document.createElement('textarea');
+          textarea.rows = 7;
+          textarea.cols = 50;
+          textarea.placeholder = 'Enter your text here...';
+          textarea.id = `myTextBox${i}`;
+          textarea.value = localStorage.getItem(`textBoxValue${i}`) || '';
+          textarea.addEventListener('input', () => {
+            localStorage.setItem(`textBoxValue${i}`, textarea.value);
+          });
+
+          clipBox.appendChild(textarea);
+          clipBox.appendChild(btn);
+          this.container.appendChild(clipBox);
+        }
+      }
+
+      adjustCounter(delta) {
+        this.counter += delta;
+        if (this.counter < 1) this.counter = 1;
+        localStorage.setItem('textAreaCount', this.counter);
+        this.renderTextareas();
+      }
+
+      async copyToClipboard(n) {
+        const textBox = document.getElementById(`myTextBox${n}`);
+        try {
+          await navigator.clipboard.writeText(textBox.value);
+        } catch (e) {
+          console.error('Failed to copy', e);
+        }
+      }
+
+      clearAllValues() {
+        if (!confirm('Are you sure?')) return;
+        // if (!confirm('Are you absolutely sure? This cannot be undone.')) return;
+        // if (!confirm('Are you absolutely absolutely sure sure???')) return;
+        for (let i = 1; i <= this.counter; i++) {
+          localStorage.removeItem(`textBoxValue${i}`);
+        }
+        localStorage.removeItem('textAreaCount');
+        this.counter = 1;
+        this.renderTextareas();
+      }
+    }
+
+    customElements.define('copy-pasta-tool', CopyPastaTool);
+  </script>
+</body>
+</html>

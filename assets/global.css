@@ -1,0 +1,17 @@
+html {
+    --bg: hsl(0, 2%, 9%);
+    --bg2: hsl(60, 1%, 28%);
+    --bg3: hsl(43, 6%, 48%);
+    --fg: hsl(12, 98%, 98%);
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: Arial, Helvetica, sans-serif;
+}
+main {
+    max-width: 1000px;
+    margin: 0px 14px 0px 20px;
+}
+a {
+    color: var(--fg);
+    width: min-content;
+}

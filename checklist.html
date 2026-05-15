@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
+    <link rel="stylesheet" href="./assets/global.css">
+    <script src="./assets/d3.js"></script>
+    <!-- <script src="plot.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/d3@7"></script> -->
+    
+    <title>checklist</title>
+
+<style>
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+section {
+    display: flex;
+    flex-direction: row;
+}
+
+textarea {
+    height: 400px;
+    width: 200px;
+    /* padding: 2px; */
+    border-width: 0;
+    background-color: var(--bg2);
+    color: var(--fg);
+    border-radius: 4px;
+    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+    /* scrollbar-width: thin; */
+    /* scrollbar-gutter: stable both-edges; */
+    resize:none;  
+    margin-right: 8px;
+}
+
+button {
+    border: 1px solid var(--bg2);
+    border-radius: 4px;    
+    background-color: var(--bg2);
+    color: var(--fg);
+    margin-bottom:4px;
+    width: 60px;
+}
+.clear_btn {
+    width: 98px;
+    /* margin-right: 1px; */
+}
+ul {
+    margin: 18px 0px 0px 0px;
+    padding: 0px;
+}
+
+table td, table th { 
+    padding: 0px 0px 0px 16px; 
+    font-size: 12px;
+
+}
+
+h2 {
+    font-size: 16px;
+    margin:4px;
+}
+
+.item_id {
+    width: 160px;
+}
+
+.item_cost{
+    width: 50px;
+}
+
+label {
+    font-size: 12px;
+}
+
+/* .item_supplier{
+    width: 500px;
+} */
+
+</style>
+</head>
+
+<body>
+    
+<main>
+    <a target="_blank" href="./index.html"><h1>GGS</h1></a>
+    <section>
+        <div>
+            <div style="margin-bottom: 2px;">
+                <button onclick="clearSearch()" class="clear_btn">clear all</button>
+            </div>
+            <textarea id="searchInput"></textarea>
+        </div>
+        <div id="output"></div>
+    </section>
+</main>
+
+
+<script>
+
+let output = document.querySelector("#output");
+const textarea = document.getElementById("searchInput");
+const STORAGE_KEY = "checklist_state_v1";
+
+output.innerText = "Paste items (comma- or newline-separated) into the text area";
+
+// Insert a Clear All (clear checks) button next to the existing clear button
+(function insertClearAllButton() {
+    const clearBtn = document.querySelector('button[onclick="clearSearch()"]');
+    if (!clearBtn) return;
+    const clearAllBtn = document.createElement("button");
+    clearAllBtn.type = "button";
+    clearAllBtn.textContent = "clear checks";
+    clearAllBtn.style.marginLeft = "8px";
+    clearAllBtn.classList.add("clear_btn");
+    clearAllBtn.addEventListener("click", () => {
+        // remove only the checks map from storage, keep text
+        const s = loadState();
+        s.checks = {};
+        saveState(s);
+        // uncheck any rendered checkboxes immediately
+        document.querySelectorAll('#output input[type="checkbox"]').forEach(cb => cb.checked = false);
+    });
+    clearBtn.parentNode.insertBefore(clearAllBtn, clearBtn.nextSibling);
+})();
+
+function clearSearch() {
+    // existing behavior: just clear textarea and output but keep saved state cleared in this function as well
+    textarea.value = "";
+    renderChecklist([]);
+    localStorage.removeItem(STORAGE_KEY);
+}
+
+function loadState() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : { text: "", checks: {} };
+    } catch {
+        return { text: "", checks: {} };
+    }
+}
+
+function saveState(state) {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch {}
+}
+
+// Stable key for items (use text); swap to a hash if needed
+function idForItem(text) {
+    return text;
+}
+
+// Split preserving blanks for hr detection; treat commas and newlines as delimiters.
+// Returns array of strings where empty strings represent blank lines (for hr).
+function splitPreserveBlanks(input) {
+    const lines = input.replace(/\r/g, "").split("\n");
+    const result = [];
+    for (const line of lines) {
+        if (line.trim() === "") {
+            result.push("");
+            continue;
+        }
+        const parts = line.split(",");
+        for (let p of parts) {
+            result.push(p);
+        }
+    }
+    return result;
+}
+
+function handleInputChange() {
+    const raw = textarea.value;
+    const splitted = splitPreserveBlanks(raw).map(s => (s === "" ? "" : s.trim()));
+    const seen = new Set();
+    const items = [];
+    for (const part of splitted) {
+        if (!part) continue;
+        if (!seen.has(part)) {
+            seen.add(part);
+            items.push(part);
+        }
+    }
+
+    const state = loadState();
+    state.text = textarea.value;
+    saveState(state);
+
+    renderChecklist(splitted, items);
+}
+
+function renderChecklist(processedLines, dedupedItems) {
+    output.innerHTML = "";
+    if (!processedLines || processedLines.length === 0 || processedLines.every(l => !l.trim())) {
+        output.innerText = "No items";
+        return;
+    }
+
+    const state = loadState();
+    state.checks = state.checks || {};
+
+    const idForTextEncoded = (text, index) => {
+        const key = idForItem(text);
+        const safe = btoa(unescape(encodeURIComponent(key))).replace(/=+$/,'').slice(0,12);
+        return `chk-${index}-${safe}`;
+    };
+
+    const rendered = new Set();
+    const container = document.createElement("div");
+    let itemIndex = 0;
+
+    for (let i = 0; i < processedLines.length; i++) {
+        const rawLine = processedLines[i];
+        if (rawLine === "") {
+            const hr = document.createElement("hr");
+            container.appendChild(hr);
+            continue;
+        }
+        const trimmed = rawLine.trim();
+        if (!trimmed) {
+            const hr = document.createElement("hr");
+            container.appendChild(hr);
+            continue;
+        }
+
+        if (rendered.has(trimmed)) continue;
+        rendered.add(trimmed);
+
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.alignItems = "center";
+        row.style.gap = "8px";
+        row.style.margin = "6px 0";
+
+        const id = idForTextEncoded(trimmed, itemIndex);
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.id = id;
+        checkbox.checked = !!state.checks[idForItem(trimmed)];
+
+        checkbox.addEventListener("change", () => {
+            const s = loadState();
+            s.checks = s.checks || {};
+            s.checks[idForItem(trimmed)] = checkbox.checked;
+            saveState(s);
+        });
+
+        const label = document.createElement("label");
+        label.htmlFor = id;
+        label.textContent = trimmed;
+        label.style.flex = "1";
+
+        const copyBtn = document.createElement("button");
+        copyBtn.type = "button";
+        copyBtn.textContent = "copy";
+        copyBtn.style.border = "1px solid var(--bg2)";
+        copyBtn.style.borderRadius = "4px";
+        copyBtn.style.backgroundColor = "var(--bg2)";
+        copyBtn.style.color = "var(--fg)";
+        copyBtn.style.padding = "2px 8px";
+        copyBtn.addEventListener("click", async () => {
+            try {
+                await navigator.clipboard.writeText(trimmed);
+                const prev = copyBtn.textContent;
+                copyBtn.textContent = "copied";
+                setTimeout(() => copyBtn.textContent = prev, 900);
+            } catch (e) {
+                const ta = document.createElement("textarea");
+                ta.value = trimmed;
+                ta.style.position = "fixed";
+                ta.style.opacity = "0";
+                document.body.appendChild(ta);
+                ta.select();
+                try { document.execCommand("copy"); } catch {}
+                document.body.removeChild(ta);
+            }
+        });
+
+        row.appendChild(checkbox);
+        row.appendChild(label);
+        row.appendChild(copyBtn);
+
+        container.appendChild(row);
+        itemIndex++;
+    }
+
+    output.appendChild(container);
+}
+
+// Init: restore textarea and render
+const initialState = loadState();
+if (initialState.text) textarea.value = initialState.text;
+handleInputChange();
+
+// Listen for textarea changes, save text and re-render
+textarea.addEventListener("input", () => {
+    const s = loadState();
+    s.text = textarea.value;
+    saveState(s);
+    handleInputChange();
+});
+
+</script>
+</body>
+</html>
