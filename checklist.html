@@ -80,7 +80,9 @@ label {
 /* .item_supplier{
     width: 500px;
 } */
-
+#instructions {
+    width: 200px;
+}
 </style>
 </head>
 
@@ -94,6 +96,7 @@ label {
                 <button onclick="clearSearch()" class="clear_btn">clear all</button>
             </div>
             <textarea id="searchInput"></textarea>
+            <div id="instructions">Paste items (comma- or newline-separated) into the text area</div>
         </div>
         <div id="output"></div>
     </section>
@@ -106,7 +109,6 @@ let output = document.querySelector("#output");
 const textarea = document.getElementById("searchInput");
 const STORAGE_KEY = "checklist_state_v1";
 
-output.innerText = "Paste items (comma- or newline-separated) into the text area";
 
 // Insert a Clear All (clear checks) button next to the existing clear button
 (function insertClearAllButton() {
@@ -265,7 +267,7 @@ function renderChecklist(processedLines, dedupedItems) {
                 await navigator.clipboard.writeText(trimmed);
                 const prev = copyBtn.textContent;
                 copyBtn.textContent = "copied";
-                setTimeout(() => copyBtn.textContent = prev, 900);
+                setTimeout(() => copyBtn.textContent = prev, 200);
             } catch (e) {
                 const ta = document.createElement("textarea");
                 ta.value = trimmed;
