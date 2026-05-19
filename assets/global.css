@@ -31,3 +31,11 @@ a {
     color: var(--fg);
     width: min-content;
 }
+
+button:hover, input[type="file"]::file-selector-button:hover {
+    background-color: var(--bg3);
+}
+
+button:active, input[type="file"]::file-selector-button:active {
+    background-color: var(--bg);
+}
