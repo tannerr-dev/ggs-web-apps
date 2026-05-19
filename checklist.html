@@ -261,7 +261,7 @@ function renderChecklist(processedLines, dedupedItems) {
             try {
                 await navigator.clipboard.writeText(trimmed);
                 const prev = copyBtn.textContent;
-                copyBtn.textContent = "copied";
+                copyBtn.textContent = "Copied";
                 setTimeout(() => copyBtn.textContent = prev, 200);
             } catch (e) {
                 const ta = document.createElement("textarea");
