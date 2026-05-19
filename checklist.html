@@ -93,7 +93,7 @@ label {
     <section>
         <div>
             <div>
-                <button onclick="clearSearch()" class="clear_btn">clear all</button>
+                <button onclick="clearSearch()" class="clear_btn">Clear All</button>
             </div>
             <textarea id="searchInput"></textarea>
             <div id="instructions" class="muted">Paste items (comma- or newline-separated) into the text area</div>
@@ -116,7 +116,7 @@ const STORAGE_KEY = "checklist_state_v1";
     if (!clearBtn) return;
     const clearAllBtn = document.createElement("button");
     clearAllBtn.type = "button";
-    clearAllBtn.textContent = "clear checks";
+    clearAllBtn.textContent = "Clear Checks";
     clearAllBtn.style.marginLeft = "8px";
     clearAllBtn.classList.add("clear_btn");
     clearAllBtn.addEventListener("click", () => {
@@ -256,7 +256,7 @@ function renderChecklist(processedLines, dedupedItems) {
 
         const copyBtn = document.createElement("button");
         copyBtn.type = "button";
-        copyBtn.textContent = "copy";
+        copyBtn.textContent = "Copy";
         copyBtn.addEventListener("click", async () => {
             try {
                 await navigator.clipboard.writeText(trimmed);
