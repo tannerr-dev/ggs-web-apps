@@ -257,11 +257,6 @@ function renderChecklist(processedLines, dedupedItems) {
         const copyBtn = document.createElement("button");
         copyBtn.type = "button";
         copyBtn.textContent = "copy";
-        copyBtn.style.border = "1px solid var(--bg2)";
-        copyBtn.style.borderRadius = "4px";
-        copyBtn.style.backgroundColor = "var(--bg2)";
-        copyBtn.style.color = "var(--fg)";
-        copyBtn.style.padding = "2px 8px";
         copyBtn.addEventListener("click", async () => {
             try {
                 await navigator.clipboard.writeText(trimmed);
