@@ -17059,16 +17059,16 @@ var Tableau10 = colors("4e79a7f28e2ce1575976b7b259a14fedc949af7aa1ff9da79c755fba
 
 // var T1 = "88b4e2"
 var T = []
-T[0] = "f2d062"
-T[1] = "f28e2c"
-T[2] = "e15759"
-T[3] = "76b7b2"
-T[4] = "59a14f"
-T[5] = "83BEF4"
-T[6] = "af7aa1"
-T[7] = "ff9da7"
-T[8] = "9c755f"
-T[9] = "bab0ab"
+T[0] = "f2d062" // yellow
+T[1] = "f28e2c" // orange
+T[2] = "e15759" // red
+T[3] = "ff9da7" // pink
+T[4] = "9367a8" // purple
+T[5] = "7082ba" // blue
+T[6] = "709aba" // light blue
+T[7] = "70bab5" // teal
+T[8] = "70ba89" // green
+T[9] = "82ba70" // light green
 let Tstring = ""
 T.forEach(x=>Tstring+=x)
 var Tanner10 = colors(Tstring);
