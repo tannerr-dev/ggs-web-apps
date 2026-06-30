@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
     <script src="./assets/d3.js"></script>
+    <link rel="stylesheet" href="./assets/global.css">
     <!-- <script src="plot.js"></script> -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/d3@7"></script> -->
     
@@ -13,21 +14,11 @@
 
 <style>
 :root {
-    --bg:hsl(0, 2%, 9%);
-    --bg2:hsl(60, 3%, 29%);            
-    --fg:hsl(60, 7%, 74%);            
-    --fg2:hsl(60, 2%, 44%);
-    --bottom-width: 471px;
-    --bottom-height: 400px;
-}
-
-@media (prefers-color-scheme: light) {
-    :root{
-        --bg:hsl(20, 10%, 94%);
-        --bg2:hsl(36, 4%, 78%);
-        --fg:hsl(0, 2%, 9%);
-        --fg2:hsl(0, 2%, 26%);
-    }
+    --width: 920px;
+    --height: 480px;
+    --search-width: 240px;
+    --search-input-width: 236px;
+    --selected-width:432px;
 }
 
 body {
@@ -35,9 +26,19 @@ body {
     background-color: var(--bg);
     color: var(--fg);
     scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
-    /* scrollbar-width: thin; */
+    scrollbar-width: thin;
     scrollbar-gutter: stable both-edges;
+    margin:0px; /*override global*/
+}
 
+h1 {
+    font-size: 10px;
+    /* display: none; */
+}
+
+.chart {
+    width: var(--width);
+    height:var(--height);
 }
 
 .flex-col {
@@ -46,16 +47,16 @@ body {
     align-items: center;
 }
 
-h1 {
-    font-size: 10px;
-    /* display: none; */
-}
-
 svg {
     border: 1px solid var(--bg2);
+    margin: 2px 0px 1px 1px;
 }
 
-.axis line,
+svg text {
+    fill: var(--fg);
+}
+
+.axis line, 
 .axis path {
     fill: none;
     shape-rendering: crispEdges;
@@ -63,60 +64,6 @@ svg {
 
 .axis text {
     font-size: 12px;
-}
-
-.item-list {
-    border: 1px solid var(--bg2);
-    height: var(--bottom-height);
-    width: var(--bottom-width);
-    overflow-y: auto;
-}
-
-.item-list-item {
-    cursor: pointer;
-    padding: 5px;
-}
-
-.item-list-item:hover {
-    background-color: var(--bg);
-}
-
-#selectedItems {
-    margin-top: 10px;
-    flex-grow: 1;
-    padding: 10px;
-    margin:0;
-}
-
-#selectedItems li {
-    list-style-type: none;
-}
-
-.remove-button {
-    margin-left: 10px;
-    cursor: pointer;
-    color: var(--fg);
-}
-
-.tooltip {
-    position: absolute;
-    background: var(--bg);
-    border: 1px solid var(--bg2);
-    padding: 5px;
-    border-radius: 5px;
-    pointer-events: none;
-    opacity: 0;
-}
-
-.item-container{
-    display: flex;
-    flex-direction: row;
-}
-
-.selected-container {
-    width: var(--bottom-width);
-    border: 1px solid var(--bg2);
-    height: var(--bottom-height);
 }
 
 .legend {
@@ -136,65 +83,173 @@ svg {
     border-radius: 2px;
 }
 
-svg text {
-    fill: var(--fg);
+.tooltip {
+    position: absolute;
+    background: var(--bg);
+    border: 1px solid var(--bg2);
+    padding: 5px;
+    border-radius: 5px;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.input-container {
+    display: flex;
+    flex-direction: row;
+    gap: 2px;
+    margin:6px 0;
+    /* padding: 2px; */
+}
+
+.instructions {
+    width: 360px;
+}
+
+#clearAllBtn {
+    border: 1px solid var(--fg);
+    border-radius: 4px; 
+    background-color: var(--bg2);
+    color: var(--fg);
+}
+
+#clearAllBtn:hover {
+    background-color: var(--bg3);
+}
+
+#clearAllBtn:active {
+    background-color: var(--bg);
+}
+
+.remove-button {
+    margin-left: 10px;
+    cursor: pointer;
+    color: var(--fg);
 }
 
 #fileInput {
-    width: 300px;
-    border: 1px solid var(--bg2);
-    border-radius: 4px;  
+    width: var(--search-width);
+    /* border: 1px solid var(--bg2); */
+    /* border-radius: 4px;  */
 }
 
 input[type="file"]::file-selector-button {
     border: 1px solid var(--fg);
-    border-radius: 4px;      
+    border-radius: 4px; 
     background-color: var(--bg2);
     color: var(--fg);
+    
 }
 
 #searchInput {
     background-color: var(--bg);
     color: var(--fg);
-    margin-right: 40px;
-    border: 1px solid var(--fg);
-    border-radius: 4px;
-    padding: 2px;
+    border: 1px solid var(--bg2);
+    margin:0 8px 4px 0;
+    /* padding: 2px; */
+    width: var(--search-input-width)
 }
 
 #searchInput::placeholder {
     color: var(--fg2);
 }
+
+.item-container{
+    display: flex;
+    flex-direction: row;
+}
+
+.item-list {
+    border: 1px solid var(--bg2);
+    height: var(--height);
+    width: var(--search-width);
+    overflow-y: auto;
+    padding:1px;
+}
+
+.item-list-item {
+    cursor: pointer;
+    padding: 5px;
+}
+
+#selectedItems {
+    margin-top: 10px;
+    flex-grow: 1;
+    padding: 10px;
+    margin:0;
+}
+
+#selectedItems li {
+    list-style-type: none;
+}
+
+textarea {
+    height: var(--height);
+    width: var(--search-width);
+    background-color: var(--bg2);
+    color: var(--fg);
+
+    border-width: 0;
+    /* border-radius: 4px; */
+
+    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+    /* scrollbar-width: thin; */
+    /* scrollbar-gutter: stable both-edges; */
+    resize:none;
+}
+
+.selected-container {
+    width: var(--selected-width);
+    height: var(--height);
+    border: 1px solid var(--bg2);
+    padding:1px;
+}
+
 </style>
 </head>
-
 <body class="flex-col">
-    
     <main>
         <!-- <a href="./index.html"><h1>GGS</h1></a> -->
-        <svg width="940" height="480"></svg>
-        <br>
-        <div style="margin-bottom: 2px;">
-            <label for="searchInput">Search for Item IDs: </label>
-            <input type="text" id="searchInput" placeholder="Search..." />
-            <!-- <br> -->
-            <input type="file" id="fileInput" accept=".csv" />
-        </div>
-        <div class="item-container">
-            <div class="item-list" id="itemList">
-            </div>
-            <div class="selected-container">
-                <!-- <h3>Selected Item IDs:</h3> -->
-                <ul id="selectedItems"></ul>
-            </div>
-        </div>
-        <div class="tooltip" id="tooltip"></div>
+        <svg class="chart" width="920" height="480"></svg>
+        <section>
+            <div class="input-container ">
+                <input type="text" id="searchInput" placeholder="Search..."/>
+                <input type="file" id="fileInput" accept=".csv" />
+                <div class="muted instructions">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/Sales%20History%20order%20date">Sales History order date</a> as a CSV and import into this page using the choose file input.</div>
+                <!-- <text for="searchInput">Search for Item IDs: </label> -->
+                <button id="clearAllBtn">Clear All</button>
+                </div>
+                <div class="item-container">
+                    <div class="item-list" id="itemList"></div>
+                    <textarea name="search_area" id="search_area"></textarea>
+                    <div class="selected-container">
+                        <!-- <h3>Selected Item IDs:</h3> -->
+                        <ul id="selectedItems"></ul>
+                    </div>
+                </div>
+                <div class="tooltip" id="tooltip"></div>
+        </section>
     </main>
 
 
 
-<!-- ================Script================= -->
+
+
 <script>
+
+let themeColors = d3.schemeTableau10
+function setTheme(){
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        // themeColors = d3.schemeSet3
+        themeColors = d3.schemeTanner10
+    } else {
+        themeColors = d3.schemeTableau10
+    }
+    // console.log("themeColors",themeColors)
+}
+setTheme();
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+    setTheme()
+});
 
 function sanitizeId(id) {
     return id.replace(/[^a-zA-Z0-9_-]/g, '_');
@@ -221,16 +276,16 @@ d3.select('#fileInput').on('change', function () {
         reader.onload = function (e) {
             const content = e.target.result;
             salesData = d3.csvParse(content, d => {
-                // If d.order_date is "YYYY-MM-DD", parse components and create a Date at midnight UTC
-                const [year, month, day] = d.order_date.split('-').map(Number);
+                let [month, day, year] = d.order_date.split('/').map(Number); // order date or invoice_date
+                year += 2000
+                const qty_shipped = +d.qty_shipped; // qty shipped or requested
+                const pricing_unit_size = +d.pricing_unit_size;
                 return {
                     order_date: new Date(year, month - 1, day),
-                    // order_date_old:new Date(d.order_date),
-                    // order_date_str: d.order_date,
                     item_id: d.item_id,
-                    purch_qty: +d.purch_qty
+                    purch_qty: pricing_unit_size !== 0 ? qty_shipped / pricing_unit_size : null,
                 };
-            });
+            }).sort((a,b)=> a.order_date - b.order_date); // order oldest to newest
             console.log("salesData", salesData);
 
             uniqueItems = [...new Set(salesData.map(d => d.item_id))]; // Get unique item IDs
@@ -239,11 +294,6 @@ d3.select('#fileInput').on('change', function () {
         };
         reader.readAsText(file);
     }
-});
-
-// Handle search input
-d3.select("#searchInput").on("input", function () {
-    updateSearchResults();
 });
 
 // Search and update item list
@@ -285,26 +335,34 @@ function addItemToList(item) {
     }
 }
 
+// Handle search input
+d3.select("#searchInput").on("input", function () {
+    updateSearchResults();
+});
+
 
 // Get selected items from the list
 function getSelectedItems() {
     return d3.select("#selectedItems").selectAll("li").nodes().map(li => li.dataset.item);
 }
 
+d3.select("#clearAllBtn").on("click", function () {
+    // Clear selected items list
+    d3.select("#selectedItems").selectAll("*").remove();
 
-let themeColors = d3.schemeTableau10
-function setTheme(){
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        // themeColors = d3.schemeSet3
-        themeColors = d3.schemeTanner10
-    } else {
-        themeColors = d3.schemeTableau10
-    }
-    // console.log("themeColors",themeColors)
-}
-setTheme()
-window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-    setTheme()
+    // Clear pasted textarea (optional)
+    d3.select("#paste_items").property("value", "");
+
+    // Reset chart
+    renderChart(salesData, []);
+
+    // d3.select("#searchInput").property("value", "");
+    // updateSearchResults();
+
+});
+
+d3.select("#search_area").on("click", ()=>{
+
 });
 
 function renderChart(data, selectedItems) {
@@ -392,8 +450,8 @@ function renderChart(data, selectedItems) {
     });
     
     // Add Legend
-    const legendX = width - 150;
-    const legendY = 20;
+    const legendX = width-840;
+    const legendY = 0;
     
     const legend = svg.append("g")
         .attr("class", "legend")
