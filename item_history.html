@@ -251,22 +251,27 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', eve
     setTheme()
 });
 
-function sanitizeId(id) {
-    return id.replace(/[^a-zA-Z0-9_-]/g, '_');
-}
-
 const margin = { top: 20, right: 30, bottom: 30, left: 40 };
 const width = +d3.select("svg").attr("width") - margin.left - margin.right;
 const height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
 
 const svg = d3.select("svg")
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+.append("g")
+.attr("transform", `translate(${margin.left},${margin.top})`);
 
 const tooltip = d3.select("#tooltip");
 
 let salesData = [];
 let uniqueItems = [];
+
+textArea = document.getElementById('search_area')
+textArea.value = ""
+textArea.placeholder = "Paste whole skus here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
+
+
+function sanitizeId(id) {
+    return id.replace(/[^a-zA-Z0-9_-]/g, '_');
+}
 
 // Handle file input change
 d3.select('#fileInput').on('change', function () {
@@ -335,6 +340,8 @@ function addItemToList(item) {
     }
 }
 
+
+
 // Handle search input
 d3.select("#searchInput").on("input", function () {
     updateSearchResults();
@@ -356,14 +363,66 @@ d3.select("#clearAllBtn").on("click", function () {
     // Reset chart
     renderChart(salesData, []);
 
-    // d3.select("#searchInput").property("value", "");
-    // updateSearchResults();
+    d3.select("#searchInput").property("value", "");
+    updateSearchResults();
+    textArea = document.getElementById('search_area')
+    textArea.value = ""
+    textArea.placeholder = "Paste whole skus here...\n Works well with Item Search tool..."
+    
+
 
 });
 
-d3.select("#search_area").on("click", ()=>{
 
-});
+function parseSearchList(text) {
+  return text
+    .split(/[\s,]+/)
+    .map(s => s.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function debounce(fn, wait = 300) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(()=> fn(...args), wait)
+    }
+}
+
+// Add selected items (textarea) to the list
+function addItemsToList(items) {
+    const selectedItemsList = d3.select("#selectedItems");
+    items.forEach((item)=>{
+        if (!selectedItemsList.selectAll(`li[data-item="${item}"]`).size()) {
+            const listItem = selectedItemsList.append("li").attr("data-item", item);
+            
+            listItem.append("span")
+                .attr("class", "remove-button")
+                .text("✖  ")
+                .on("click", function () {
+                    d3.select(this.parentNode).remove(); // Remove the item from the list
+                    renderChart(salesData, getSelectedItems()); // Update the chart
+                });
+
+            listItem.append("span")
+                .text(item);
+        }
+    });
+    setTheme()
+    renderChart(salesData, getSelectedItems());
+}
+
+const doSearchAndRender = () => {
+    const raw = document.getElementById('search_area').value;
+    console.log(raw)
+    const list = parseSearchList(raw);
+    console.log(list)
+    addItemsToList(list)
+}
+
+d3.select("#search_area").on("input", debounce(doSearchAndRender));
+
+
 
 function renderChart(data, selectedItems) {
     const filteredData = data.filter(d => selectedItems.includes(d.item_id));
