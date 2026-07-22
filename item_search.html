@@ -172,7 +172,7 @@ fileInput.addEventListener('change', (ev) => {
 function parseSearchList(text) {
   return text
     .split(/[\s,]+/)
-    .map(s => s.trim())
+    .map(s => s.trim().toUpperCase())
     .filter(Boolean);
 }
 

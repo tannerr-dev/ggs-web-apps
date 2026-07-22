@@ -146,7 +146,7 @@ d3.select('#fileInput').on('change', function () {
 
 // Handle search input
 d3.select("#searchInput").on("input", function () {
-    const searchInput = d3.select("#searchInput").property("value");
+    const searchInput = d3.select("#searchInput").property("value").toUpperCase();
     const rawValues = searchInput.split("\n").map(s => s.trim()).filter(Boolean);
     output.innerHTML = ""  
     // remove duplicates but keep first occurrence order
