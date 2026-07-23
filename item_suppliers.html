@@ -112,7 +112,12 @@ h2 {
 
 
 <script>
-
+function resetTextArea() {
+    textArea = document.getElementById('searchInput')
+    textArea.value = ""
+    textArea.placeholder = "Paste whole item ids here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
+}
+resetTextArea()
 let output = document.querySelector("#output")
 output.innerText = "No Data -- import csv"
 
@@ -120,6 +125,7 @@ function clearSearch() {
     document.getElementById("searchInput").value = ""
     console.log('hello')
     output.innerHTML = ""
+    resetTextArea()
 }
 
 
