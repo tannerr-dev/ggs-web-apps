@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
     <script src="./assets/d3.js"></script>
+    <link rel="stylesheet" href="./assets/reset.css">
     <link rel="stylesheet" href="./assets/global.css">
     <!-- <script src="plot.js"></script> -->
     <!-- <script src="https://cdn.jsdelivr.net/npm/d3@7"></script> -->
@@ -16,25 +17,75 @@
 :root {
     --width: 920px;
     --height: 480px;
+    --bottom-height: 410px;
     --search-width: 240px;
     --search-input-width: 236px;
     --selected-width:432px;
+    --btn-height: 26px;
+}
+
+html, body {
+    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+    scrollbar-width: thin;
+    scrollbar-gutter: stable both-edges;
 }
 
 body {
     font-family: Arial, sans-serif;
     background-color: var(--bg);
     color: var(--fg);
-    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
-    scrollbar-width: thin;
-    scrollbar-gutter: stable both-edges;
-    margin:0px; /*override global*/
+
+}
+
+main {
+    margin: 0px 10px 0px 10px;
+}
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr; /* left, center, right */
+    grid-template-areas: "left center right";
+    gap: 16px;
+    /* padding: 16px; */
+}
+
+/* Assign areas */
+.left   { 
+    grid-area: left;
+}
+
+.center { 
+    grid-area: center; 
+}
+
+.right  { 
+    grid-area: right; 
+}
+
+.left, .right {
+    border: solid, 1px, var(--bg2);
+    margin:2px;
+    padding:1px;
+}
+
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "center center"
+      "left right";
+  }
+}
+
+.bottom-section {
+    height: calc(var(--bottom-height));
 }
 
 h1 {
     font-size: 10px;
     /* display: none; */
 }
+
 
 .chart {
     width: var(--width);
@@ -49,15 +100,14 @@ h1 {
 
 svg {
     border: 1px solid var(--bg2);
-    margin: 2px 0px 1px 1px;
+    /* margin: 2px 0px 1px 1px; */
 }
 
 svg text {
     fill: var(--fg);
 }
 
-.axis line, 
-.axis path {
+.axis line, .axis path {
     fill: none;
     shape-rendering: crispEdges;
 }
@@ -96,9 +146,11 @@ svg text {
 .input-container {
     display: flex;
     flex-direction: row;
-    gap: 2px;
-    margin:6px 0;
-    /* padding: 2px; */
+    /* gap: 2px; */
+    /* margin:6px 0; */
+    padding: 2px 0px;
+    align-items:center;
+    justify-content: space-between;
 }
 
 .instructions {
@@ -110,6 +162,9 @@ svg text {
     border-radius: 4px; 
     background-color: var(--bg2);
     color: var(--fg);
+    font-size:12px;
+    /* height: 100%; */
+    height:var(--btn-height);
 }
 
 #clearAllBtn:hover {
@@ -130,6 +185,7 @@ svg text {
     width: var(--search-width);
     /* border: 1px solid var(--bg2); */
     /* border-radius: 4px;  */
+    font-size: 14px;
 }
 
 input[type="file"]::file-selector-button {
@@ -137,7 +193,8 @@ input[type="file"]::file-selector-button {
     border-radius: 4px; 
     background-color: var(--bg2);
     color: var(--fg);
-    
+    height:var(--btn-height);
+    font-size:12px;
 }
 
 #searchInput {
@@ -156,19 +213,23 @@ input[type="file"]::file-selector-button {
 .item-container{
     display: flex;
     flex-direction: row;
+    height: var(--bottom-height);
+    justify-content: space-between;
+    align-items:center;
 }
 
 .item-list {
     border: 1px solid var(--bg2);
-    height: var(--height);
+    height: var(--bottom-height);
     width: var(--search-width);
     overflow-y: auto;
-    padding:1px;
+    /* padding:1px; */
+    font-size: 14px;
 }
 
 .item-list-item {
     cursor: pointer;
-    padding: 5px;
+    padding: 2px 0px 0px 4px;
 }
 
 #selectedItems {
@@ -183,7 +244,7 @@ input[type="file"]::file-selector-button {
 }
 
 textarea {
-    height: var(--height);
+    height: var(--bottom-height);
     width: var(--search-width);
     background-color: var(--bg2);
     color: var(--fg);
@@ -191,51 +252,57 @@ textarea {
     border-width: 0;
     /* border-radius: 4px; */
 
-    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+    /* scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
     /* scrollbar-width: thin; */
     /* scrollbar-gutter: stable both-edges; */
     resize:none;
+    font-size: 14px;
+    padding: 4px;
 }
 
 .selected-container {
     width: var(--selected-width);
-    height: var(--height);
+    height: var(--bottom-height);
     border: 1px solid var(--bg2);
-    padding:1px;
+    /* padding:1px; */
 }
 
 </style>
 </head>
-<body class="flex-col">
-    <main>
-        <!-- <a href="./index.html"><h1>GGS</h1></a> -->
-        <svg class="chart" width="920" height="480"></svg>
-        <section>
-            <div class="input-container ">
-                <input type="text" id="searchInput" placeholder="Search..."/>
-                <input type="file" id="fileInput" accept=".csv" />
-                <div class="muted instructions">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/Sales%20History%20order%20date">Sales History order date</a> as a CSV and import into this page using the choose file input.</div>
-                <!-- <text for="searchInput">Search for Item IDs: </label> -->
-                <button id="clearAllBtn">Clear All</button>
-                </div>
-                <div class="item-container">
-                    <div class="item-list" id="itemList"></div>
-                    <textarea name="search_area" id="search_area"></textarea>
-                    <div class="selected-container">
-                        <!-- <h3>Selected Item IDs:</h3> -->
-                        <ul id="selectedItems"></ul>
-                    </div>
-                </div>
-                <div class="tooltip" id="tooltip"></div>
-        </section>
-    </main>
 
 
+
+<body class="layout">
+<main class="center">
+    <!-- <a href="./index.html"><h1>GGS</h1></a> -->
+    <svg class="chart" width="920" height="480"></svg>
+    <section>
+        <div class="input-container">
+            <input type="text" id="searchInput" placeholder="Search..."/>
+            <input type="file" id="fileInput" accept=".csv" />
+            <div class="muted instructions">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/Sales%20History%20order%20date">Sales History order date</a> as a CSV and import into this page using the choose file input.</div>
+            <!-- <text for="searchInput">Search for Item IDs: </label> -->
+            <button id="clearAllBtn">Clear All</button>
+            </div>
+            <div class="item-container">
+                <div class="item-list" id="itemList"></div>
+                <textarea name="search_area" id="search_area"></textarea>
+                <div class="selected-container">
+                    <!-- <h3>Selected Item IDs:</h3> -->
+                    <ul id="selectedItems"></ul>
+                </div>
+            </div>
+            <div class="tooltip" id="tooltip"></div>
+    </section>
+</main>
+<section class="left"></section>
+<section class="right">
+    <!-- <h2>Customers</h2> -->
+</section>
 
 
 
 <script>
-
 // init theme colors
 let themeColors = d3.schemeTableau10
 function setTheme(){
@@ -266,7 +333,7 @@ const tooltip = d3.select("#tooltip");
 
 let salesData = [];
 let uniqueItems = [];
-
+const revLineColor = "#75c058"
 
 // define functions
 function resetTextArea() {
@@ -285,22 +352,65 @@ function handleFileInput() {
         const reader = new FileReader();
         reader.onload = function (e) {
             const content = e.target.result;
+            // salesData = d3.csvParse(content, d => {
+            //     let [month, day, year] = d.order_date.split('/').map(Number); // order date or invoice_date
+            //     const qty_shipped = +d.qty_shipped; // qty shipped or requested
+            //     const pricing_unit_size = +d.pricing_unit_size;
+            //     if (year < 100) {
+            //         // console.log(year)
+            //         year += 2000; // 26 -> 2026
+            //     }
+            //     return {
+            //         order_date: new Date(year, month - 1, day),
+            //         item_id: d.item_id,
+            //         purch_qty: pricing_unit_size !== 0 ? qty_shipped / pricing_unit_size : null,
+            //         revenue : (+d.qty_shipped_sales_unit || 0) * (+d.unit_price || 0)
+            //     };
+            // }).sort((a,b)=> a.order_date - b.order_date); // order oldest to newest
             salesData = d3.csvParse(content, d => {
-                let [month, day, year] = d.order_date.split('/').map(Number); // order date or invoice_date
-                year += 2000
-                const qty_shipped = +d.qty_shipped; // qty shipped or requested
-                const pricing_unit_size = +d.pricing_unit_size;
+                // pick the right date field if needed
+                const dateStr = d.order_date ?? d.invoice_date;
+                const dateParts = String(dateStr).split('/');
+                let month = Number(dateParts[0]);
+                let day   = Number(dateParts[1]);
+                let year  = Number(dateParts[2]);
+
+                if (year < 100 && Number.isFinite(year)) year += 2000;
+
+                const qty_shipped_sales_unit = Number(d.qty_shipped_sales_unit);
+                const unit_price = Number(d.unit_price);
+
+                const revenue = qty_shipped_sales_unit * unit_price;
+
+                const pricing_unit_size = Number(d.pricing_unit_size);
+                const qty_shipped = Number(d.qty_shipped);
+
+                const orderDate = new Date(year, month - 1, day);
+
                 return {
-                    order_date: new Date(year, month - 1, day),
+                    order_date: orderDate,
                     item_id: d.item_id,
-                    purch_qty: pricing_unit_size !== 0 ? qty_shipped / pricing_unit_size : null,
+                    purch_qty: (pricing_unit_size !== 0 && Number.isFinite(qty_shipped) && Number.isFinite(pricing_unit_size))
+                    ? qty_shipped / pricing_unit_size
+                    : null,
+                    revenue
                 };
-            }).sort((a,b)=> a.order_date - b.order_date); // order oldest to newest
+            })
+            // IMPORTANT: drop invalid rows so the chart never sees NaN
+            .filter(d =>
+            d.order_date instanceof Date &&
+            Number.isFinite(d.order_date.getTime()) &&
+            Number.isFinite(d.revenue) &&
+            d.item_id != null
+            )
+            .sort((a, b) => a.order_date - b.order_date);
+
             console.log("salesData", salesData);
 
-            uniqueItems = [...new Set(salesData.map(d => d.item_id))]; // Get unique item IDs
+            uniqueItems = [...new Set(salesData.map(d => d.item_id))].sort(); // Get unique item IDs
             updateSearchResults(); // Update the list with all items initially
-            renderChart(salesData, []); // Render chart with no items selected
+            // renderChart(salesData, []); // Render chart with no items selected
+            renderTotalChart(salesData)
         };
         reader.readAsText(file);
     }
@@ -382,6 +492,7 @@ function addItemsToList(items) {
     });
     setTheme()
     renderChart(salesData, getSelectedItems());
+
 }
 
 function doSearchAndRender() {
@@ -403,9 +514,29 @@ function renderChart(data, selectedItems) {
     );
     console.log('aggregatedData',aggregatedData);
 
-    const monthlySales = Array.from(aggregatedData, ([date, itemData]) => {
-        return Array.from(itemData, ([itemId, qty]) => ({ date, itemId, qty }));
-    }).flat();
+    // const monthlySales = Array.from(aggregatedData, ([date, itemData]) => {
+    //     return Array.from(itemData, ([itemId, qty]) => ({ date, itemId, qty }));
+    // }).flat();
+
+    // 1) all items that appear anywhere in your data
+    const allItemIds = new Set(filteredData.map(d => d.item_id));
+
+    // 2) month range to cover (from min to max order_date)
+    const monthStart = d3.timeMonth.floor(d3.min(filteredData, d => d.order_date));
+    const monthEnd   = d3.timeMonth.floor(d3.max(filteredData, d => d.order_date));
+
+    // If you want a fixed range instead, replace with your own start/end.
+    const months = d3.timeMonth.range(monthStart, d3.timeMonth.offset(monthEnd, 1));
+
+    // 3) build full grid: every month x every itemId, qty=0 if missing
+    const monthlySales = months.flatMap(date => {
+        const itemMap = aggregatedData.get(date); // Map<itemId, qty> or undefined
+        return Array.from(allItemIds, itemId => ({
+            date,
+            itemId,
+            qty: itemMap?.get(itemId) ?? 0
+        }));
+    });
     console.log('monthlySales', monthlySales);
 
     const x = d3.scaleTime()
@@ -426,6 +557,7 @@ function renderChart(data, selectedItems) {
 
     // Y Axis
     svg.append("g")
+        // .attr("transform", `translate(20,0)`)
         .attr("class", "axis")
         .call(d3.axisLeft(y));
 
@@ -500,23 +632,132 @@ function renderChart(data, selectedItems) {
             .attr("y", 12)
             .text(itemId);
     });
+    svg.append("text")
+    .attr("x", width / 2)
+    .attr("y", 0)
+    .attr("text-anchor", "middle")
+    .style("font-size", "14px")
+    .style("font-weight", "bold")
+    .text("Quantity shipped");
+}
+
+function renderTotalChart(data) {
+    console.log(data.slice(0, 10));
+
+    // Aggregate total revenue by month
+    const monthlyRevenue = Array.from(
+    d3.rollup(
+        data,
+        rows => d3.sum(rows, d => d.revenue ?? 0),
+        d => d3.timeMonth(d.order_date)
+    ),
+    ([date, revenue]) => ({ date, revenue })
+    ).sort((a, b) => a.date - b.date);
+
+    console.log("monthlyRevenue", monthlyRevenue);
+
+    // Create scales
+    const x = d3.scaleTime()
+        .domain(d3.extent(monthlyRevenue, d => d.date))
+        .range([0, width]);
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(monthlyRevenue, d => d.revenue)])
+        .nice()
+        .range([height, 0]);
+
+    // Clear previous chart
+    svg.selectAll("*").remove();
+
+    // X Axis
+    svg.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0,${height})`)
+        .call(d3.axisBottom(x));
+
+    // Y Axis
+    svg.append("g")
+        .attr("class", "axis")
+        // .attr("transform", `translate(20,0)`)
+        .call(
+            d3.axisLeft(y)
+                .tickFormat(d => d3.formatPrefix(".1", 1e6)(d))
+                // .tickFormat(d3.formatPrefix(".2", 1e6))  // e.g., 3.75M
+                // .tickFormat(d3.format("$,.0f"))
+
+        );
+
+    // Line generator
+    const line = d3.line()
+        .x(d => x(d.date))
+        .y(d => y(d.revenue));
+
+    // Revenue line
+    svg.append("path")
+        .datum(monthlyRevenue)
+        .attr("fill", "none")
+        .attr("stroke", revLineColor)
+        .attr("stroke-width", 3)
+        .attr("d", line);
+
+    // Revenue points
+    svg.selectAll(".revenue-dot")
+        .data(monthlyRevenue)
+        .enter()
+        .append("circle")
+        .attr("class", "revenue-dot")
+        .attr("cx", d => x(d.date))
+        .attr("cy", d => y(d.revenue))
+        .attr("r", 4)
+        .attr("fill", revLineColor)
+        .on("mouseover", function (event, d) {
+
+            const formattedDate = d.date.toLocaleDateString("en-US", {
+                month: "2-digit",
+                year: "numeric"
+            });
+
+            tooltip
+                .style("opacity", 1)
+                .html(`
+                    Revenue: ${d3.format("$,.2f")(d.revenue)}<br>
+                    Date: ${formattedDate}
+                `)
+                .style("left", (event.pageX + 5) + "px")
+                .style("top", (event.pageY - 28) + "px");
+
+        })
+        .on("mouseout", function () {
+            tooltip.style("opacity", 0);
+        });
+
+    // Optional chart title
+    svg.append("text")
+        .attr("x", width / 2)
+        .attr("y", 0)
+        .attr("text-anchor", "middle")
+        .style("font-size", "14px")
+        .style("font-weight", "bold")
+        .text("Monthly Revenue by order date ($)");
 }
 
 function handleClearAll() {
     d3.select("#selectedItems").selectAll("*").remove(); // remove selected items
-    renderChart(salesData, []); // reset chart with no data
+    // renderChart(salesData, []); // reset chart with no data
     d3.select("#searchInput").property("value", ""); // clear text area
     updateSearchResults();
     resetTextArea();
+    renderTotalChart(salesData)
 }
 
-// invoke function
+
+// invoke functions
 resetTextArea()
 
 // event listeners
 d3.select('#fileInput').on('change', handleFileInput);
 d3.select("#searchInput").on("input", updateSearchResults);
-d3.select("#search_area").on("input", debounce(doSearchAndRender, 500));
+d3.select("#search_area").on("input", debounce(doSearchAndRender, 100));
 d3.select("#clearAllBtn").on("click", handleClearAll);
 
 </script>
