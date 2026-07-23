@@ -236,6 +236,7 @@ textarea {
 
 <script>
 
+// init theme colors
 let themeColors = d3.schemeTableau10
 function setTheme(){
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -251,6 +252,8 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', eve
     setTheme()
 });
 
+
+// init global variables
 const margin = { top: 20, right: 30, bottom: 30, left: 40 };
 const width = +d3.select("svg").attr("width") - margin.left - margin.right;
 const height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
@@ -264,17 +267,19 @@ const tooltip = d3.select("#tooltip");
 let salesData = [];
 let uniqueItems = [];
 
-textArea = document.getElementById('search_area')
-textArea.value = ""
-textArea.placeholder = "Paste whole skus here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
 
+// define functions
+function resetTextArea() {
+    textArea = document.getElementById('search_area')
+    textArea.value = ""
+    textArea.placeholder = "Paste whole skus here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
+}
 
 function sanitizeId(id) {
     return id.replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
-// Handle file input change
-d3.select('#fileInput').on('change', function () {
+function handleFileInput() {
     const file = this.files[0];
     if (file) {
         const reader = new FileReader();
@@ -299,9 +304,8 @@ d3.select('#fileInput').on('change', function () {
         };
         reader.readAsText(file);
     }
-});
+}
 
-// Search and update item list
 function updateSearchResults() {
     const searchValue = d3.select("#searchInput").property("value").toLowerCase();
     const filteredItems = uniqueItems.filter(item => item.toLowerCase().includes(searchValue));
@@ -317,7 +321,6 @@ function updateSearchResults() {
     });
 }
 
-// Add selected item to the list
 function addItemToList(item) {
     const selectedItemsList = d3.select("#selectedItems");
     if (!selectedItemsList.selectAll(`li[data-item="${item}"]`).size()) {
@@ -340,39 +343,9 @@ function addItemToList(item) {
     }
 }
 
-
-
-// Handle search input
-d3.select("#searchInput").on("input", function () {
-    updateSearchResults();
-});
-
-
-// Get selected items from the list
 function getSelectedItems() {
     return d3.select("#selectedItems").selectAll("li").nodes().map(li => li.dataset.item);
 }
-
-d3.select("#clearAllBtn").on("click", function () {
-    // Clear selected items list
-    d3.select("#selectedItems").selectAll("*").remove();
-
-    // Clear pasted textarea (optional)
-    d3.select("#paste_items").property("value", "");
-
-    // Reset chart
-    renderChart(salesData, []);
-
-    d3.select("#searchInput").property("value", "");
-    updateSearchResults();
-    textArea = document.getElementById('search_area')
-    textArea.value = ""
-    textArea.placeholder = "Paste whole skus here...\n Works well with Item Search tool..."
-    
-
-
-});
-
 
 function parseSearchList(text) {
   return text
@@ -389,7 +362,6 @@ function debounce(fn, wait = 300) {
     }
 }
 
-// Add selected items (textarea) to the list
 function addItemsToList(items) {
     const selectedItemsList = d3.select("#selectedItems");
     items.forEach((item)=>{
@@ -412,17 +384,13 @@ function addItemsToList(items) {
     renderChart(salesData, getSelectedItems());
 }
 
-const doSearchAndRender = () => {
+function doSearchAndRender() {
     const raw = document.getElementById('search_area').value;
     console.log(raw)
     const list = parseSearchList(raw);
     console.log(list)
     addItemsToList(list)
 }
-
-d3.select("#search_area").on("input", debounce(doSearchAndRender));
-
-
 
 function renderChart(data, selectedItems) {
     const filteredData = data.filter(d => selectedItems.includes(d.item_id));
@@ -533,6 +501,24 @@ function renderChart(data, selectedItems) {
             .text(itemId);
     });
 }
+
+function handleClearAll() {
+    d3.select("#selectedItems").selectAll("*").remove(); // remove selected items
+    renderChart(salesData, []); // reset chart with no data
+    d3.select("#searchInput").property("value", ""); // clear text area
+    updateSearchResults();
+    resetTextArea();
+}
+
+// invoke function
+resetTextArea()
+
+// event listeners
+d3.select('#fileInput').on('change', handleFileInput);
+d3.select("#searchInput").on("input", updateSearchResults);
+d3.select("#search_area").on("input", debounce(doSearchAndRender, 500));
+d3.select("#clearAllBtn").on("click", handleClearAll);
+
 </script>
 </body>
 </html>
