@@ -4,18 +4,25 @@
     --bg2: hsl(60, 1%, 28%);
     --bg3: hsl(43, 6%, 48%);
     --fg: hsl(12, 98%, 98%);
+    --fg2: hsl(0, 1%, 71%);
     --bottom-width: 471px;
     --bottom-height: 400px;
 }
 
-.muted { color:#666; font-size:0.9em; }
-.error { color: #b00; }
+.muted { 
+    color:#666; font-size:0.9em; 
+}
+
+.error { 
+    color: #b00; 
+}
+
 @media (prefers-color-scheme: light) {
     :root{
         --bg:hsl(20, 10%, 94%);
         --bg2:hsl(36, 4%, 78%);
         --fg:hsl(0, 2%, 9%);
-        --fg2:hsl(0, 2%, 26%);
+        --fg2:hsl(0, 1%, 61%);
     }
 }
 
@@ -24,13 +31,16 @@ html {
     color: var(--fg);
     font-family: Arial, Helvetica, sans-serif;
 }
+
 body {
     margin:0;
 }
+
 main {
-    max-width: 1000px;
-    margin: 0px 20px 0px 20px;
+    max-width: 1040px;
+    padding: 0px 20px;
 }
+
 a {
     color: var(--fg);
     width: min-content;
@@ -43,3 +53,4 @@ button:hover, input[type="file"]::file-selector-button:hover {
 button:active, input[type="file"]::file-selector-button:active {
     background-color: var(--bg);
 }
+

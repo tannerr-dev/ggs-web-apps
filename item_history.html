@@ -24,6 +24,12 @@
     --btn-height: 26px;
 }
 
+.flex-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 html, body {
     scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
     scrollbar-width: thin;
@@ -34,28 +40,39 @@ body {
     font-family: Arial, sans-serif;
     background-color: var(--bg);
     color: var(--fg);
-
 }
 
 main {
-    margin: 0px 10px 0px 10px;
+    max-width: 100%;
 }
 
 .layout {
     display: grid;
     grid-template-columns: 1fr auto 1fr; /* left, center, right */
     grid-template-areas: "left center right";
-    gap: 16px;
-    /* padding: 16px; */
+    /* gap: 16px; */
 }
 
-/* Assign areas */
+@media (max-width: 1500px) {
+  .layout {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "center center"
+      "left right";
+  }
+}
+
 .left   { 
     grid-area: left;
 }
 
 .center { 
     grid-area: center; 
+    width:100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* justify-content:center; */
 }
 
 .right  { 
@@ -68,13 +85,17 @@ main {
     padding:1px;
 }
 
-@media (max-width: 1000px) {
-  .layout {
-    grid-template-columns: 1fr 1fr;
-    grid-template-areas:
-      "center center"
-      "left right";
-  }
+/* #items {} */
+
+/* #customers {} */
+
+.chart-container {
+    width: 920px;
+}
+
+.chart {
+    width: var(--width);
+    height:var(--height);
 }
 
 .bottom-section {
@@ -83,64 +104,6 @@ main {
 
 h1 {
     font-size: 10px;
-    /* display: none; */
-}
-
-
-.chart {
-    width: var(--width);
-    height:var(--height);
-}
-
-.flex-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-svg {
-    border: 1px solid var(--bg2);
-    /* margin: 2px 0px 1px 1px; */
-}
-
-svg text {
-    fill: var(--fg);
-}
-
-.axis line, .axis path {
-    fill: none;
-    shape-rendering: crispEdges;
-}
-
-.axis text {
-    font-size: 12px;
-}
-
-.legend {
-    font-size: 12px;
-}
-
-.legend-item {
-    margin-bottom: 8px;
-    display: flex;
-    align-items: center;
-}
-
-.legend-color {
-    width: 15px;
-    height: 15px;
-    margin-right: 8px;
-    border-radius: 2px;
-}
-
-.tooltip {
-    position: absolute;
-    background: var(--bg);
-    border: 1px solid var(--bg2);
-    padding: 5px;
-    border-radius: 5px;
-    pointer-events: none;
-    opacity: 0;
 }
 
 .input-container {
@@ -267,42 +230,94 @@ textarea {
     /* padding:1px; */
 }
 
+/* D3 chart css */
+svg {
+    border: 1px solid var(--bg2);
+    /* margin: 2px 0px 1px 1px; */
+}
+
+svg text {
+    fill: var(--fg);
+}
+
+.axis line, .axis path {
+    fill: none;
+    shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-size: 12px;
+}
+
+.legend {
+    font-size: 12px;
+}
+
+.legend-item {
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+}
+
+.legend-color {
+    width: 15px;
+    height: 15px;
+    margin-right: 8px;
+    border-radius: 2px;
+}
+
+.tooltip {
+    position: absolute;
+    background: var(--bg);
+    border: 1px solid var(--bg2);
+    padding: 5px;
+    border-radius: 5px;
+    pointer-events: none;
+    opacity: 0;
+}
+
 </style>
 </head>
 
 
-
 <body class="layout">
 <main class="center">
-    <!-- <a href="./index.html"><h1>GGS</h1></a> -->
-    <svg class="chart" width="920" height="480"></svg>
-    <section>
-        <div class="input-container">
-            <input type="text" id="searchInput" placeholder="Search..."/>
-            <input type="file" id="fileInput" accept=".csv" />
-            <div class="muted instructions">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/Sales%20History%20order%20date">Sales History order date</a> as a CSV and import into this page using the choose file input.</div>
-            <!-- <text for="searchInput">Search for Item IDs: </label> -->
-            <button id="clearAllBtn">Clear All</button>
-            </div>
-            <div class="item-container">
-                <div class="item-list" id="itemList"></div>
-                <textarea name="search_area" id="search_area"></textarea>
-                <div class="selected-container">
-                    <!-- <h3>Selected Item IDs:</h3> -->
-                    <ul id="selectedItems"></ul>
+    <div class="chart-container">
+        <!-- <a href="./index.html"><h1>GGS</h1></a> -->
+        <svg class="chart" width="920" height="480"></svg>
+        <section>
+            <div class="input-container">
+                <input type="text" id="searchInput" placeholder="Search..."/>
+                <input type="file" id="fileInput" accept=".csv" />
+                <div class="muted instructions">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/Sales%20History%20order%20date">Sales History order date</a> as a CSV and import into this page using the choose file input.</div>
+                <!-- <text for="searchInput">Search for Item IDs: </label> -->
+                <button id="clearAllBtn">Clear All</button>
                 </div>
-            </div>
-            <div class="tooltip" id="tooltip"></div>
-    </section>
+                <div class="item-container">
+                    <div class="item-list" id="itemList"></div>
+                    <textarea name="search_area" id="search_area"></textarea>
+                    <div class="selected-container">
+                        <!-- <h3>Selected Item IDs:</h3> -->
+                        <ul id="selectedItems"></ul>
+                    </div>
+                </div>
+                <div class="tooltip" id="tooltip"></div>
+        </section>
+    </div> 
 </main>
-<section class="left"></section>
-<section class="right">
+<aside class="left">
+    <!-- <h2>Items</h2> -->
+    <div id="items"></div>
+</aside>
+<aside class="right">
     <!-- <h2>Customers</h2> -->
-</section>
-
+    <div id="customers"></div>
+</aside>
 
 
 <script>
+// BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT
+
 // init theme colors
 let themeColors = d3.schemeTableau10
 function setTheme(){
@@ -335,85 +350,35 @@ let salesData = [];
 let uniqueItems = [];
 const revLineColor = "#75c058"
 
+
 // define functions
 function resetTextArea() {
     textArea = document.getElementById('search_area')
     textArea.value = ""
-    textArea.placeholder = "Paste whole skus here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
+    textArea.placeholder = "Paste whole item ids here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
 }
 
 function sanitizeId(id) {
     return id.replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
-function handleFileInput() {
-    const file = this.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const content = e.target.result;
-            // salesData = d3.csvParse(content, d => {
-            //     let [month, day, year] = d.order_date.split('/').map(Number); // order date or invoice_date
-            //     const qty_shipped = +d.qty_shipped; // qty shipped or requested
-            //     const pricing_unit_size = +d.pricing_unit_size;
-            //     if (year < 100) {
-            //         // console.log(year)
-            //         year += 2000; // 26 -> 2026
-            //     }
-            //     return {
-            //         order_date: new Date(year, month - 1, day),
-            //         item_id: d.item_id,
-            //         purch_qty: pricing_unit_size !== 0 ? qty_shipped / pricing_unit_size : null,
-            //         revenue : (+d.qty_shipped_sales_unit || 0) * (+d.unit_price || 0)
-            //     };
-            // }).sort((a,b)=> a.order_date - b.order_date); // order oldest to newest
-            salesData = d3.csvParse(content, d => {
-                // pick the right date field if needed
-                const dateStr = d.order_date ?? d.invoice_date;
-                const dateParts = String(dateStr).split('/');
-                let month = Number(dateParts[0]);
-                let day   = Number(dateParts[1]);
-                let year  = Number(dateParts[2]);
-
-                if (year < 100 && Number.isFinite(year)) year += 2000;
-
-                const qty_shipped_sales_unit = Number(d.qty_shipped_sales_unit);
-                const unit_price = Number(d.unit_price);
-
-                const revenue = qty_shipped_sales_unit * unit_price;
-
-                const pricing_unit_size = Number(d.pricing_unit_size);
-                const qty_shipped = Number(d.qty_shipped);
-
-                const orderDate = new Date(year, month - 1, day);
-
-                return {
-                    order_date: orderDate,
-                    item_id: d.item_id,
-                    purch_qty: (pricing_unit_size !== 0 && Number.isFinite(qty_shipped) && Number.isFinite(pricing_unit_size))
-                    ? qty_shipped / pricing_unit_size
-                    : null,
-                    revenue
-                };
-            })
-            // IMPORTANT: drop invalid rows so the chart never sees NaN
-            .filter(d =>
-            d.order_date instanceof Date &&
-            Number.isFinite(d.order_date.getTime()) &&
-            Number.isFinite(d.revenue) &&
-            d.item_id != null
-            )
-            .sort((a, b) => a.order_date - b.order_date);
-
-            console.log("salesData", salesData);
-
-            uniqueItems = [...new Set(salesData.map(d => d.item_id))].sort(); // Get unique item IDs
-            updateSearchResults(); // Update the list with all items initially
-            // renderChart(salesData, []); // Render chart with no items selected
-            renderTotalChart(salesData)
-        };
-        reader.readAsText(file);
+function debounce(fn, wait = 300) {
+    let t;
+    return (...args) => {
+        clearTimeout(t);
+        t = setTimeout(()=> fn(...args), wait)
     }
+}
+
+function parseSearchList(text) {
+  return text
+    .split(/[\s,]+/)
+    .map(s => s.trim().toUpperCase())
+    .filter(Boolean);
+}
+
+function getSelectedItems() {
+    return d3.select("#selectedItems").selectAll("li").nodes().map(li => li.dataset.item);
 }
 
 function updateSearchResults() {
@@ -431,44 +396,138 @@ function updateSearchResults() {
     });
 }
 
+function doSearchAndRender() {
+    const raw = document.getElementById('search_area').value;
+    // console.log(raw)
+    const list = parseSearchList(raw);
+    console.log(list)
+    addItemsToList(list)
+}
+
+function handleClearAll() {
+    d3.select("#selectedItems").selectAll("*").remove(); // remove selected items
+    // renderChart(salesData, []); // reset chart with no data
+    d3.select("#searchInput").property("value", ""); // clear text area
+    updateSearchResults();
+    resetTextArea();
+    renderTotalChart(salesData)
+    renderItemStats(salesData, [])
+    renderCustomerStats(salesData, [])
+}
+
+function handleFileInput() {
+    const file = this.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const content = e.target.result;
+        // track errors
+        const errors = [];
+        let rowIndex = 0;
+
+        salesData = d3.csvParse(content, d => {
+            //track index for error tracking
+            const currentIndex = rowIndex++;
+
+            // fields we need to check for missing data, columns needed..
+            const dateStr = d.order_date;
+            const customer = d.customer_name;
+            const item_id = d.item_id;
+            const qty = Number(d.qty_shipped);
+            const qty_shipped_sales_unit = Number(d.qty_shipped_sales_unit); // revenue calc
+            const unit_price = Number(d.unit_price); // revenue calc
+            
+            // check missing for each field above
+            const missing = []
+            if (dateStr == null || String(dateStr).trim() === "") missing.push("order_date");
+            if (customer == null || String(customer).trim()=== "") missing.push("customer");
+            if (item_id == null || String(item_id).trim()=== "") missing.push("item_id");
+            if (!Number.isFinite(qty)) missing.push("qty");
+            if (!Number.isFinite(qty_shipped_sales_unit)) missing.push("qty_shipped_sales_unit");
+            if (!Number.isFinite(unit_price)) missing.push("unit_price")
+
+            if (missing.length) {
+                errors.push({row: currentIndex + 1, missing, raw: d});
+            }
+
+            // parse date string
+            const dateParts = String(dateStr).split('/');
+            let month = Number(dateParts[0]);
+            let day   = Number(dateParts[1]);
+            let year  = Number(dateParts[2]);
+            if (year < 100 && Number.isFinite(year)) year += 2000;
+            const order_date = new Date(year, month - 1, day);
+            
+            // calculate revenue
+            const revenue = qty_shipped_sales_unit * unit_price;
+
+            return {
+                order_date,
+                customer,
+                item_id,
+                qty,
+                revenue,
+            };
+        })
+        // IMPORTANT: drop invalid rows so the chart never sees NaN
+        .filter(d =>
+            d.order_date instanceof Date &&
+            Number.isFinite(d.order_date.getTime()) &&
+            Number.isFinite(d.revenue) &&
+            d.item_id != null
+        )
+        .sort((a, b) => a.order_date - b.order_date);
+
+
+        // print the missing values to console
+        if (errors.length) {
+            // const sample = errors.slice(0, 5).map(er => `Row ${er.row}: missing ${er.missing.join(", ")}`).join("\n");
+            // alert(`Found ${errors.length} row(s) with missing/invalid values.\n\n${sample}`);
+            optional: console.log("Errors", errors)
+            console.log("data row count: ", salesData.length)
+            console.log('first row: ', salesData[0])
+        }
+
+        // console.log("salesData", salesData);
+        
+        uniqueItems = [...new Set(salesData.map(d => d.item_id))].sort(); // Get unique item IDs
+        updateSearchResults(); // Update the list with all items initially
+        // renderChart(salesData, []); // Render chart with no items selected
+        renderTotalChart(salesData)
+        selectedItems = getSelectedItems()
+        // renderChart(salesData, selectedItems);
+        renderItemStats(salesData, selectedItems)
+        renderCustomerStats(salesData, selectedItems)
+    };
+    reader.readAsText(file);
+}
+
+
 function addItemToList(item) {
     const selectedItemsList = d3.select("#selectedItems");
     if (!selectedItemsList.selectAll(`li[data-item="${item}"]`).size()) {
         const listItem = selectedItemsList.append("li").attr("data-item", item);
         
-        // Add a remove button to the list item FIRST
         listItem.append("span")
             .attr("class", "remove-button")
             .text("✖  ")
             .on("click", function () {
                 d3.select(this.parentNode).remove(); // Remove the item from the list
-                renderChart(salesData, getSelectedItems()); // Update the chart
+                // renderChart(salesData, getSelectedItems()); // Update the chart
+                selectedItems = getSelectedItems()
+                renderChart(salesData, selectedItems);
+                renderItemStats(salesData, selectedItems)
+                renderCustomerStats(salesData, selectedItems)
             });
     
-        // Add the item text AFTER the button
         listItem.append("span")
             .text(item);
         setTheme()
-        renderChart(salesData, getSelectedItems());
-    }
-}
-
-function getSelectedItems() {
-    return d3.select("#selectedItems").selectAll("li").nodes().map(li => li.dataset.item);
-}
-
-function parseSearchList(text) {
-  return text
-    .split(/[\s,]+/)
-    .map(s => s.trim().toUpperCase())
-    .filter(Boolean);
-}
-
-function debounce(fn, wait = 300) {
-    let t;
-    return (...args) => {
-        clearTimeout(t);
-        t = setTimeout(()=> fn(...args), wait)
+        // renderChart(salesData, getSelectedItems());
+        selectedItems = getSelectedItems()
+        renderChart(salesData, selectedItems);
+        renderItemStats(salesData, selectedItems)
+        renderCustomerStats(salesData, selectedItems)
     }
 }
 
@@ -483,7 +542,11 @@ function addItemsToList(items) {
                 .text("✖  ")
                 .on("click", function () {
                     d3.select(this.parentNode).remove(); // Remove the item from the list
-                    renderChart(salesData, getSelectedItems()); // Update the chart
+                    // renderChart(salesData, getSelectedItems()); // Update the chart
+                    selectedItems = getSelectedItems()
+                    renderChart(salesData, selectedItems);
+                    renderItemStats(data, selectedItems)
+                    renderCustomerStats(data, selectedItems)
                 });
 
             listItem.append("span")
@@ -491,16 +554,10 @@ function addItemsToList(items) {
         }
     });
     setTheme()
-    renderChart(salesData, getSelectedItems());
-
-}
-
-function doSearchAndRender() {
-    const raw = document.getElementById('search_area').value;
-    console.log(raw)
-    const list = parseSearchList(raw);
-    console.log(list)
-    addItemsToList(list)
+    selectedItems = getSelectedItems()
+    renderChart(salesData, selectedItems);
+    renderItemStats(salesData, selectedItems)
+    renderCustomerStats(salesData, selectedItems)
 }
 
 function renderChart(data, selectedItems) {
@@ -508,11 +565,11 @@ function renderChart(data, selectedItems) {
 
     // Aggregating data by month
     const aggregatedData = d3.rollup(filteredData,
-        v => d3.sum(v, d => d.purch_qty),
+        v => d3.sum(v, d => d.qty),
         d => d3.timeMonth(d.order_date),
         d => d.item_id // Group by item ID as well
     );
-    console.log('aggregatedData',aggregatedData);
+    // console.log('aggregatedData',aggregatedData);
 
     // const monthlySales = Array.from(aggregatedData, ([date, itemData]) => {
     //     return Array.from(itemData, ([itemId, qty]) => ({ date, itemId, qty }));
@@ -537,7 +594,7 @@ function renderChart(data, selectedItems) {
             qty: itemMap?.get(itemId) ?? 0
         }));
     });
-    console.log('monthlySales', monthlySales);
+    // console.log('monthlySales', monthlySales);
 
     const x = d3.scaleTime()
         .domain(d3.extent(monthlySales, d => d.date))
@@ -642,7 +699,7 @@ function renderChart(data, selectedItems) {
 }
 
 function renderTotalChart(data) {
-    console.log(data.slice(0, 10));
+    // console.log(data.slice(0, 10));
 
     // Aggregate total revenue by month
     const monthlyRevenue = Array.from(
@@ -654,7 +711,7 @@ function renderTotalChart(data) {
     ([date, revenue]) => ({ date, revenue })
     ).sort((a, b) => a.date - b.date);
 
-    console.log("monthlyRevenue", monthlyRevenue);
+    // console.log("monthlyRevenue", monthlyRevenue);
 
     // Create scales
     const x = d3.scaleTime()
@@ -741,13 +798,67 @@ function renderTotalChart(data) {
         .text("Monthly Revenue by order date ($)");
 }
 
-function handleClearAll() {
-    d3.select("#selectedItems").selectAll("*").remove(); // remove selected items
-    // renderChart(salesData, []); // reset chart with no data
-    d3.select("#searchInput").property("value", ""); // clear text area
-    updateSearchResults();
-    resetTextArea();
-    renderTotalChart(salesData)
+function renderCustomerStats(data, selectedItems){
+    let rows = []
+    if (selectedItems.length){
+        //TODO FILTER DOWN TO SELECTED ITEMS ONLY
+        rows = Array.from(
+            d3.rollup(
+                data,
+                rows => d3.sum(rows, d => d.qty),
+                d => d.customer
+            ),
+            ([customer, qty]) => ({customer, qty})
+        ).sort((a,b) => b.qty - a.qty)
+        console.log(rows)
+    } else {
+        rows = Array.from(
+            d3.rollup(
+                data,
+                rows => d3.sum(rows, d => d.revenue),
+                d => d.customer
+            ),
+            ([customer, revenue]) => ({customer, revenue})
+        ).sort((a,b) => b.revenue - a.revenue)
+        console.log(rows)
+    }
+    // rows = rows.map(r => ({customer: r.customer, revenue: r.revenue}))
+    // console.log(rows)
+    const container = d3.select("#customers");
+    container.selectAll("*").remove();
+
+    const headers = rows[0].qty !== undefined ? ["customer", "qty"] : ["customer", "revenue"];
+    const table = container.append("table");
+    table.append("thead")
+    .append("tr")
+    .selectAll("th")
+    .data(headers)
+    .enter()
+    .append("th")
+    .text(d => d);
+
+    const fmt2 = d3.format(",.2f");
+    const numericHeaders = new Set(["qty", "revenue"]); // adjust to your real header keys
+
+    table.append("tbody")
+        .selectAll("tr")
+        .data(rows)
+        .enter()
+        .append("tr")
+        .selectAll("td")
+        .data(d => headers.map(h => d[h]))
+        .enter()
+        .append("td")
+        .text((value, i)=> {
+            const h = headers[i];
+            return numericHeaders.has(h) ? `$${fmt2(Number(value))}`: String(value);
+        });
+    
+}
+
+
+function renderItemStats(data, selectedItems){
+
 }
 
 
