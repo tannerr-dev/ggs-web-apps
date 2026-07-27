@@ -545,8 +545,8 @@ function addItemsToList(items) {
                     // renderChart(salesData, getSelectedItems()); // Update the chart
                     selectedItems = getSelectedItems()
                     renderChart(salesData, selectedItems);
-                    renderItemStats(data, selectedItems)
-                    renderCustomerStats(data, selectedItems)
+                    renderItemStats(salesData, selectedItems)
+                    renderCustomerStats(salesData, selectedItems)
                 });
 
             listItem.append("span")
@@ -801,10 +801,10 @@ function renderTotalChart(data) {
 function renderCustomerStats(data, selectedItems){
     let rows = []
     if (selectedItems.length){
-        //TODO FILTER DOWN TO SELECTED ITEMS ONLY
+        const selectedSet = new Set(selectedItems);
         rows = Array.from(
             d3.rollup(
-                data,
+                data.filter(d => selectedSet.has(d.item_id)),
                 rows => d3.sum(rows, d => d.qty),
                 d => d.customer
             ),
@@ -838,7 +838,7 @@ function renderCustomerStats(data, selectedItems){
     .text(d => d);
 
     const fmt2 = d3.format(",.2f");
-    const numericHeaders = new Set(["qty", "revenue"]); // adjust to your real header keys
+    const moneyHeaders = new Set(["revenue"]); // adjust to your real header keys
 
     table.append("tbody")
         .selectAll("tr")
@@ -849,16 +849,71 @@ function renderCustomerStats(data, selectedItems){
         .data(d => headers.map(h => d[h]))
         .enter()
         .append("td")
+        // .text(d => d);
         .text((value, i)=> {
             const h = headers[i];
-            return numericHeaders.has(h) ? `$${fmt2(Number(value))}`: String(value);
+            return moneyHeaders.has(h) ? `$${fmt2(Number(value))}`: String(value);
         });
-    
 }
 
 
 function renderItemStats(data, selectedItems){
+    // console.log(data)
+    let rows = []
+    if (selectedItems.length){
+        const selectedSet = new Set(selectedItems);
+        rows = Array.from(
+            d3.rollup(
+                data.filter(d => selectedSet.has(d.item_id)),
+                rows => d3.sum(rows, d => d.qty),
+                d => d.item_id
+            ),
+            ([item_id, qty]) => ({item_id, qty})
+        ).sort((a,b) => b.qty - a.qty)
+        console.log(rows)
+    } else {
+        rows = Array.from(
+            d3.rollup(
+                data,
+                rows => d3.sum(rows, d => d.revenue),
+                d => d.item_id
+            ),
+            ([item_id, revenue]) => ({item_id, revenue})
+        ).sort((a,b) => b.revenue - a.revenue)
+        console.log(rows)
+    }
+    // rows = rows.map(r => ({customer: r.customer, revenue: r.revenue}))
+    // console.log(rows)
+    const container = d3.select("#items");
+    container.selectAll("*").remove();
 
+    const headers = rows[0].qty !== undefined ? ["item_id", "qty"] : ["item_id", "revenue"];
+    const table = container.append("table");
+    table.append("thead")
+    .append("tr")
+    .selectAll("th")
+    .data(headers)
+    .enter()
+    .append("th")
+    .text(d => d);
+
+    const fmt2 = d3.format(",.2f");
+    const moneyHeaders = new Set(["revenue"]); // adjust to your real header keys
+
+    table.append("tbody")
+        .selectAll("tr")
+        .data(rows)
+        .enter()
+        .append("tr")
+        .selectAll("td")
+        .data(d => headers.map(h => d[h]))
+        .enter()
+        .append("td")
+        // .text(d => d);
+        .text((value, i)=> {
+            const h = headers[i];
+            return moneyHeaders.has(h) ? `$${fmt2(Number(value))}`: String(value);
+        });
 }
 
 
