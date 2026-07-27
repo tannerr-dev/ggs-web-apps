@@ -104,7 +104,8 @@ main {
 .number-cell {
     text-align: right;
 }
-.left .text-cell {
+
+.text-cell {
     cursor:pointer;
 }
 
@@ -214,14 +215,14 @@ input[type="file"]::file-selector-button {
     padding: 2px 0px 0px 4px;
 }
 
-#selectedItems {
+#selectedItems, #selectedCustomers {
     margin-top: 10px;
     flex-grow: 1;
     padding: 10px;
     margin:0;
 }
 
-#selectedItems li {
+#selectedItems li , #selectedCustomers li{
     list-style-type: none;
 }
 
@@ -312,6 +313,7 @@ svg text {
                     <div class="selected-container">
                         <!-- <h3>Selected Item IDs:</h3> -->
                         <ul id="selectedItems"></ul>
+                        <ul id="selectedCustomers"></ul>
                     </div>
                 </div>
                 <div class="tooltip" id="tooltip"></div>
@@ -390,10 +392,6 @@ function parseSearchList(text) {
     .filter(Boolean);
 }
 
-function getSelectedItems() {
-    return d3.select("#selectedItems").selectAll("li").nodes().map(li => li.dataset.item);
-}
-
 function updateSearchResults() {
     const searchValue = d3.select("#searchInput").property("value").toLowerCase();
     const filteredItems = uniqueItems.filter(item => item.toLowerCase().includes(searchValue));
@@ -419,13 +417,11 @@ function doSearchAndRender() {
 
 function handleClearAll() {
     d3.select("#selectedItems").selectAll("*").remove(); // remove selected items
-    // renderChart(salesData, []); // reset chart with no data
+    d3.select("#selectedCustomers").selectAll("*").remove();
     d3.select("#searchInput").property("value", ""); // clear text area
     updateSearchResults();
     resetTextArea();
-    renderTotalChart(salesData)
-    renderItemStats(salesData, [])
-    renderCustomerStats(salesData, [])
+    render()
 }
 
 function handleFileInput() {
@@ -434,6 +430,7 @@ function handleFileInput() {
     const reader = new FileReader();
     reader.onload = function (e) {
         const content = e.target.result;
+
         // track errors
         const errors = [];
         let rowIndex = 0;
@@ -506,15 +503,19 @@ function handleFileInput() {
         uniqueItems = [...new Set(salesData.map(d => d.item_id))].sort(); // Get unique item IDs
         updateSearchResults(); // Update the list with all items initially
         // renderChart(salesData, []); // Render chart with no items selected
-        renderTotalChart(salesData)
-        selectedItems = getSelectedItems()
-        // renderChart(salesData, selectedItems);
-        renderItemStats(salesData, selectedItems)
-        renderCustomerStats(salesData, selectedItems)
+        // renderTotalChart(salesData)
+        // selectedItems = getSelectedItems()
+        // // renderChart(salesData, selectedItems);
+        // renderItemStats(salesData, selectedItems)
+        // renderCustomerStats(salesData, selectedItems)
+        render()
     };
     reader.readAsText(file);
 }
 
+function getSelectedItems() {
+    return d3.select("#selectedItems").selectAll("li").nodes().map(li => li.dataset.item);
+}
 
 function addItemToList(item) {
     const selectedItemsList = d3.select("#selectedItems");
@@ -527,20 +528,17 @@ function addItemToList(item) {
             .on("click", function () {
                 d3.select(this.parentNode).remove(); // Remove the item from the list
                 // renderChart(salesData, getSelectedItems()); // Update the chart
-                selectedItems = getSelectedItems()
-                renderChart(salesData, selectedItems);
-                renderItemStats(salesData, selectedItems)
-                renderCustomerStats(salesData, selectedItems)
+                // selectedItems = getSelectedItems()
+                // renderChart(salesData, selectedItems);
+                // renderItemStats(salesData, selectedItems)
+                // renderCustomerStats(salesData, selectedItems)
+                render()
             });
     
         listItem.append("span")
             .text(item);
         setTheme()
-        // renderChart(salesData, getSelectedItems());
-        selectedItems = getSelectedItems()
-        renderChart(salesData, selectedItems);
-        renderItemStats(salesData, selectedItems)
-        renderCustomerStats(salesData, selectedItems)
+        render()
     }
 }
 
@@ -555,11 +553,8 @@ function addItemsToList(items) {
                 .text("✖  ")
                 .on("click", function () {
                     d3.select(this.parentNode).remove(); // Remove the item from the list
-                    // renderChart(salesData, getSelectedItems()); // Update the chart
-                    selectedItems = getSelectedItems()
-                    renderChart(salesData, selectedItems);
-                    renderItemStats(salesData, selectedItems)
-                    renderCustomerStats(salesData, selectedItems)
+
+                    render()
                 });
 
             listItem.append("span")
@@ -567,11 +562,51 @@ function addItemsToList(items) {
         }
     });
     setTheme()
-    selectedItems = getSelectedItems()
-    renderChart(salesData, selectedItems);
-    renderItemStats(salesData, selectedItems)
-    renderCustomerStats(salesData, selectedItems)
+    render()
 }
+
+function getCustomerList(){
+    return d3.select("#selectedCustomers").selectAll("li").nodes().map(li => li.dataset.customer);
+} 
+
+function addCustomerToList(customer){
+    const selectedCustomersList = d3.select("#selectedCustomers");
+    if(!selectedCustomersList.selectAll(`li[data-customer="${customer}"]`).size()){
+
+        const listItem = selectedCustomersList.append("li").attr("data-customer", customer);
+        listItem.append("span")
+            .attr("class", "remove-button")
+            .text("✖  ")
+            .on("click", function(){
+                d3.select(this.parentNode).remove();
+                render()
+            })
+        listItem.append("span")
+            .text(customer)
+        render()
+    }
+}
+
+function render() {
+    let customers = getCustomerList();
+    console.log(customers)
+    let data = []
+    if (customers.length){
+        data = salesData.filter(d => customers.includes(d.customer));
+    } else {
+        data = salesData;
+    }
+    // console.log(data)
+    selectedItems = getSelectedItems()
+    // console.log(selectedItems)
+    if (selectedItems.length) {
+        renderChart(data, selectedItems)
+    } else {
+        renderTotalChart(data)
+    }
+    renderItemStats(data, selectedItems)
+    renderCustomerStats(data, selectedItems)
+};
 
 function renderChart(data, selectedItems) {
     const filteredData = data.filter(d => selectedItems.includes(d.item_id));
@@ -677,7 +712,7 @@ function renderChart(data, selectedItems) {
                 tooltip.style("opacity", 0);
             });
     });
-    
+
     // Add Legend
     const legendX = width-840;
     const legendY = 0;
@@ -811,6 +846,7 @@ function renderTotalChart(data) {
         .text("Monthly Revenue by order date ($)");
 }
 
+
 function renderCustomerStats(data, selectedItems){
     let rows = []
     if (selectedItems.length){
@@ -864,8 +900,8 @@ function renderCustomerStats(data, selectedItems){
         .enter()
         .append("tr")
         .on("click", (event, row)=>{
-            // addItemToList(row.item_id);
-            renderCustomerChart(row.customer)
+            addCustomerToList(row.customer)
+            // renderCustomerChart(row.customer)
         })
         .selectAll("td")
         .data(d => headers.map(h => d[h]))
@@ -879,9 +915,7 @@ function renderCustomerStats(data, selectedItems){
         .text((d, i)=> {
             const h = headers[i];
             return moneyHeaders.has(h) ? `${fmt2(Number(d))}`: String(d);
-        })
-        // .on("click")
-        ;
+        });
 }
 
 function renderItemStats(data, selectedItems){
