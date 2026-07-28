@@ -301,7 +301,7 @@ svg text {
         <svg class="chart" width="920" height="480"></svg>
         <section>
             <div class="input-container">
-                <input type="text" id="searchInput" placeholder="Search..."/>
+                <input type="text" id="searchInput" placeholder="Search items..."/>
                 <input type="file" id="fileInput" accept=".csv" />
                 <div class="muted instructions">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/Sales%20History%20order%20date">Sales History order date</a> as a CSV and import into this page using the choose file input.</div>
                 <!-- <text for="searchInput">Search for Item IDs: </label> -->
@@ -334,7 +334,7 @@ svg text {
 // BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT
 
 // init theme colors
-let themeColors = d3.schemeTableau10
+let themeColors = d3.schemeTableau10;
 function setTheme(){
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
         // themeColors = d3.schemeSet3
@@ -343,14 +343,12 @@ function setTheme(){
         themeColors = d3.schemeTableau10
     }
     // console.log("themeColors",themeColors)
-}
+};
 setTheme();
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
     setTheme()
 });
 
-
-// init global variables
 const margin = { top: 20, right: 30, bottom: 30, left: 40 };
 const width = +d3.select("svg").attr("width") - margin.left - margin.right;
 const height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
@@ -363,34 +361,32 @@ const tooltip = d3.select("#tooltip");
 
 let salesData = [];
 let uniqueItems = [];
-const revLineColor = "#75c058"
+const revLineColor = "#75c058";
 
-
-// define functions
 function resetTextArea() {
-    textArea = document.getElementById('search_area')
-    textArea.value = ""
-    textArea.placeholder = "Paste whole item ids here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
-}
+    textArea = document.getElementById('search_area');
+    textArea.value = "";
+    textArea.placeholder = "Paste whole item ids here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com";
+};
 
 function sanitizeId(id) {
     return id.replace(/[^a-zA-Z0-9_-]/g, '_');
-}
+};
 
 function debounce(fn, wait = 300) {
     let t;
     return (...args) => {
         clearTimeout(t);
         t = setTimeout(()=> fn(...args), wait)
-    }
-}
+    };
+};
 
 function parseSearchList(text) {
   return text
     .split(/[\s,]+/)
     .map(s => s.trim().toUpperCase())
     .filter(Boolean);
-}
+};
 
 function updateSearchResults() {
     const searchValue = d3.select("#searchInput").property("value").toLowerCase();
@@ -405,7 +401,7 @@ function updateSearchResults() {
             .text(item)
             .on("click", () => addItemToList(item)); // Add item to list on click
     });
-}
+};
 
 function doSearchAndRender() {
     const raw = document.getElementById('search_area').value;
@@ -413,7 +409,7 @@ function doSearchAndRender() {
     const list = parseSearchList(raw);
     console.log(list)
     addItemsToList(list)
-}
+};
 
 function handleClearAll() {
     d3.select("#selectedItems").selectAll("*").remove(); // remove selected items
@@ -421,14 +417,14 @@ function handleClearAll() {
     d3.select("#searchInput").property("value", ""); // clear text area
     updateSearchResults();
     resetTextArea();
-    render()
-}
+    render();
+};
 
 function handleFileInput() {
     const file = this.files[0];
     if(!file) return;
     const reader = new FileReader();
-    reader.onload = function (e) {
+    reader.onload = async function (e) {
         const content = e.target.result;
 
         // track errors
@@ -448,17 +444,17 @@ function handleFileInput() {
             const unit_price = Number(d.unit_price); // revenue calc
             
             // check missing for each field above
-            const missing = []
+            const missing = [];
             if (dateStr == null || String(dateStr).trim() === "") missing.push("order_date");
             if (customer == null || String(customer).trim()=== "") missing.push("customer");
             if (item_id == null || String(item_id).trim()=== "") missing.push("item_id");
             if (!Number.isFinite(qty)) missing.push("qty");
             if (!Number.isFinite(qty_shipped_sales_unit)) missing.push("qty_shipped_sales_unit");
-            if (!Number.isFinite(unit_price)) missing.push("unit_price")
+            if (!Number.isFinite(unit_price)) missing.push("unit_price");
 
             if (missing.length) {
                 errors.push({row: currentIndex + 1, missing, raw: d});
-            }
+            };
 
             // parse date string
             const dateParts = String(dateStr).split('/');
@@ -488,34 +484,103 @@ function handleFileInput() {
         )
         .sort((a, b) => a.order_date - b.order_date);
 
-
-        // print the missing values to console
         if (errors.length) {
-            // const sample = errors.slice(0, 5).map(er => `Row ${er.row}: missing ${er.missing.join(", ")}`).join("\n");
-            // alert(`Found ${errors.length} row(s) with missing/invalid values.\n\n${sample}`);
             optional: console.log("Errors", errors)
             console.log("data row count: ", salesData.length)
             console.log('first row: ', salesData[0])
-        }
-
-        // console.log("salesData", salesData);
+        };
         
         uniqueItems = [...new Set(salesData.map(d => d.item_id))].sort(); // Get unique item IDs
         updateSearchResults(); // Update the list with all items initially
-        // renderChart(salesData, []); // Render chart with no items selected
-        // renderTotalChart(salesData)
-        // selectedItems = getSelectedItems()
-        // // renderChart(salesData, selectedItems);
-        // renderItemStats(salesData, selectedItems)
-        // renderCustomerStats(salesData, selectedItems)
         render()
+
+        // ✅ Save to IndexedDB
+        const salesDataToStore = salesData.map(d => ({
+            order_date_ms: d.order_date.getTime(),
+            customer: d.customer,
+            item_id: d.item_id,
+            qty: d.qty,
+            revenue: d.revenue
+        }));
+
+        await putRecord({
+            id: "salesData",
+            data: salesDataToStore
+        });
+
     };
     reader.readAsText(file);
+};
+
+//// indexeddb functions
+
+const DB_NAME = "myApp";
+const DB_VERSION = 1;
+const STORE_NAME = "data";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+
+    req.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        // keyPath "id" so we can upsert by id
+        db.createObjectStore(STORE_NAME, { keyPath: "id" });
+      }
+    };
+
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 }
+
+async function putRecord(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(record);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function getRecord(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(id);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function loadFromIndexedDB() {
+  const record = await getRecord("salesData");
+  if (!record) return;
+
+  // Rebuild Date objects
+  salesData = record.data.map(d => ({
+    order_date: new Date(d.order_date_ms),
+    customer: d.customer,
+    item_id: d.item_id,
+    qty: d.qty,
+    revenue: d.revenue
+  })).sort((a, b) => a.order_date - b.order_date);
+
+  uniqueItems = [...new Set(salesData.map(d => d.item_id))].sort();
+  updateSearchResults();
+  render();
+}
+
+
+
+/// chart functions
 
 function getSelectedItems() {
     return d3.select("#selectedItems").selectAll("li").nodes().map(li => li.dataset.item);
-}
+};
 
 function addItemToList(item) {
     const selectedItemsList = d3.select("#selectedItems");
@@ -527,20 +592,15 @@ function addItemToList(item) {
             .text("✖  ")
             .on("click", function () {
                 d3.select(this.parentNode).remove(); // Remove the item from the list
-                // renderChart(salesData, getSelectedItems()); // Update the chart
-                // selectedItems = getSelectedItems()
-                // renderChart(salesData, selectedItems);
-                // renderItemStats(salesData, selectedItems)
-                // renderCustomerStats(salesData, selectedItems)
                 render()
             });
     
         listItem.append("span")
             .text(item);
-        setTheme()
-        render()
-    }
-}
+        setTheme();
+        render();
+    };
+};
 
 function addItemsToList(items) {
     const selectedItemsList = d3.select("#selectedItems");
@@ -553,7 +613,6 @@ function addItemsToList(items) {
                 .text("✖  ")
                 .on("click", function () {
                     d3.select(this.parentNode).remove(); // Remove the item from the list
-
                     render()
                 });
 
@@ -561,18 +620,17 @@ function addItemsToList(items) {
                 .text(item);
         }
     });
-    setTheme()
-    render()
-}
+    setTheme();
+    render();
+};
 
 function getCustomerList(){
     return d3.select("#selectedCustomers").selectAll("li").nodes().map(li => li.dataset.customer);
-} 
+};
 
 function addCustomerToList(customer){
     const selectedCustomersList = d3.select("#selectedCustomers");
     if(!selectedCustomersList.selectAll(`li[data-customer="${customer}"]`).size()){
-
         const listItem = selectedCustomersList.append("li").attr("data-customer", customer);
         listItem.append("span")
             .attr("class", "remove-button")
@@ -580,32 +638,32 @@ function addCustomerToList(customer){
             .on("click", function(){
                 d3.select(this.parentNode).remove();
                 render()
-            })
+            });
         listItem.append("span")
-            .text(customer)
-        render()
-    }
-}
+            .text(customer);
+        render();
+    };
+};
 
 function render() {
     let customers = getCustomerList();
-    console.log(customers)
-    let data = []
+    console.log(customers);
+    let data = [];
     if (customers.length){
         data = salesData.filter(d => customers.includes(d.customer));
     } else {
         data = salesData;
-    }
+    };
     // console.log(data)
-    selectedItems = getSelectedItems()
+    selectedItems = getSelectedItems();
     // console.log(selectedItems)
     if (selectedItems.length) {
-        renderChart(data, selectedItems)
+        renderChart(data, selectedItems);
     } else {
-        renderTotalChart(data)
-    }
-    renderItemStats(data, selectedItems)
-    renderCustomerStats(data, selectedItems)
+        renderTotalChart(data);
+    };
+    renderItemStats(data, selectedItems);
+    renderCustomerStats(data, selectedItems);
 };
 
 function renderChart(data, selectedItems) {
@@ -844,11 +902,10 @@ function renderTotalChart(data) {
         .style("font-size", "14px")
         .style("font-weight", "bold")
         .text("Monthly Revenue by order date ($)");
-}
-
+};
 
 function renderCustomerStats(data, selectedItems){
-    let rows = []
+    let rows = [];
     if (selectedItems.length){
         const selectedSet = new Set(selectedItems);
         rows = Array.from(
@@ -858,7 +915,7 @@ function renderCustomerStats(data, selectedItems){
                 d => d.customer
             ),
             ([customer, qty]) => ({customer, qty})
-        ).sort((a,b) => b.qty - a.qty)
+        ).sort((a,b) => b.qty - a.qty);
         // console.log(rows)
     } else {
         rows = Array.from(
@@ -868,11 +925,8 @@ function renderCustomerStats(data, selectedItems){
                 d => d.customer
             ),
             ([customer, revenue]) => ({customer, revenue})
-        ).sort((a,b) => b.revenue - a.revenue)
-        // console.log(rows)
-    }
-    // rows = rows.map(r => ({customer: r.customer, revenue: r.revenue}))
-    // console.log(rows)
+        ).sort((a,b) => b.revenue - a.revenue);
+    };
 
     rows = rows.slice(0, 100);
     const container = d3.select("#customers");
@@ -881,13 +935,13 @@ function renderCustomerStats(data, selectedItems){
     const headers = rows[0].qty !== undefined ? ["customer", "qty"] : ["customer", "revenue"];
     const table = container.append("table");
     table.append("thead")
-    .append("tr")
-    .selectAll("th")
-    .data(headers)
-    .enter()
-    .append("th")
-    .attr("class", "table-headers")
-    .text(d => d);
+        .append("tr")
+        .selectAll("th")
+        .data(headers)
+        .enter()
+        .append("th")
+        .attr("class", "table-headers")
+        .text(d => d);
 
     // const fmt2 = d3.format(",.2f");
     // const moneyHeaders = new Set(["revenue"]); // adjust to your real header keys
@@ -916,11 +970,11 @@ function renderCustomerStats(data, selectedItems){
             const h = headers[i];
             return moneyHeaders.has(h) ? `${fmt2(Number(d))}`: String(d);
         });
-}
+};
 
 function renderItemStats(data, selectedItems){
     // console.log(data)
-    let rows = []
+    let rows = [];
     if (selectedItems.length){
         const selectedSet = new Set(selectedItems);
         rows = Array.from(
@@ -930,7 +984,7 @@ function renderItemStats(data, selectedItems){
                 d => d.item_id
             ),
             ([item_id, qty]) => ({item_id, qty})
-        ).sort((a,b) => b.qty - a.qty)
+        ).sort((a,b) => b.qty - a.qty);
         // console.log(rows)
     } else {
         rows = Array.from(
@@ -940,11 +994,9 @@ function renderItemStats(data, selectedItems){
                 d => d.item_id
             ),
             ([item_id, revenue]) => ({item_id, revenue})
-        ).sort((a,b) => b.revenue - a.revenue)
+        ).sort((a,b) => b.revenue - a.revenue);
         // console.log(rows)
     }
-    // rows = rows.map(r => ({customer: r.customer, revenue: r.revenue}))
-    // console.log(rows)
     rows = rows.slice(0, 100);
     const container = d3.select("#items");
     container.selectAll("*").remove();
@@ -952,13 +1004,13 @@ function renderItemStats(data, selectedItems){
     const headers = rows[0].qty !== undefined ? ["item_id", "qty"] : ["item_id", "revenue"];
     const table = container.append("table");
     table.append("thead")
-    .append("tr")
-    .selectAll("th")
-    .data(headers)
-    .enter()
-    .append("th")
-    .attr("class", "table-headers")
-    .text(d => d);
+        .append("tr")
+        .selectAll("th")
+        .data(headers)
+        .enter()
+        .append("th")
+        .attr("class", "table-headers")
+        .text(d => d);
 
     const fmt2 = d3.format(",.0f");
     const moneyHeaders = new Set(["revenue", "qty"]); // adjust to your real header keys
@@ -984,11 +1036,12 @@ function renderItemStats(data, selectedItems){
             const h = headers[i];
             return moneyHeaders.has(h) ? `${fmt2(Number(value))}`: String(value);
         });
-}
+};
 
 
 // invoke functions
-resetTextArea()
+loadFromIndexedDB();
+resetTextArea();
 
 // event listeners
 d3.select('#fileInput').on('change', handleFileInput);
