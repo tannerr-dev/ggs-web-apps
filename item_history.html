@@ -288,6 +288,7 @@ svg text {
     border-radius: 5px;
     pointer-events: none;
     opacity: 0;
+    z-index: 3;
 }
 
 </style>
@@ -301,8 +302,8 @@ svg text {
         <svg class="chart" width="920" height="480"></svg>
         <section>
             <div class="input-container">
-                <input type="text" id="searchInput" placeholder="Search items..."/>
-                <input type="file" id="fileInput" accept=".csv" />
+                <input type="text" id="searchInput" placeholder="Search item ids..."/>
+                <input type="file" id="fileInput" accept=".csv"/>
                 <div class="muted instructions">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Data%20Analyst/Sales%20History%20order%20date">Sales History order date</a> as a CSV and import into this page using the choose file input.</div>
                 <!-- <text for="searchInput">Search for Item IDs: </label> -->
                 <button id="clearAllBtn">Clear All</button>
@@ -333,7 +334,7 @@ svg text {
 <script>
 // BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT BEGIN SCRIPT
 
-// init theme colors
+// init theme colors for the d3 lines...
 let themeColors = d3.schemeTableau10;
 function setTheme(){
     if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -442,12 +443,14 @@ function handleFileInput() {
             const qty = Number(d.qty_shipped);
             const qty_shipped_sales_unit = Number(d.qty_shipped_sales_unit); // revenue calc
             const unit_price = Number(d.unit_price); // revenue calc
+            const short_code = d.short_code;
             
             // check missing for each field above
             const missing = [];
             if (dateStr == null || String(dateStr).trim() === "") missing.push("order_date");
             if (customer == null || String(customer).trim()=== "") missing.push("customer");
             if (item_id == null || String(item_id).trim()=== "") missing.push("item_id");
+            if (short_code == null || String(short_code).trim()=== "") missing.push("short_code");
             if (!Number.isFinite(qty)) missing.push("qty");
             if (!Number.isFinite(qty_shipped_sales_unit)) missing.push("qty_shipped_sales_unit");
             if (!Number.isFinite(unit_price)) missing.push("unit_price");
@@ -471,6 +474,7 @@ function handleFileInput() {
                 order_date,
                 customer,
                 item_id,
+                short_code,
                 qty,
                 revenue,
             };
@@ -494,11 +498,12 @@ function handleFileInput() {
         updateSearchResults(); // Update the list with all items initially
         render()
 
-        // ✅ Save to IndexedDB
+        // Save to IndexedDB
         const salesDataToStore = salesData.map(d => ({
             order_date_ms: d.order_date.getTime(),
             customer: d.customer,
             item_id: d.item_id,
+            short_code : d.short_code,
             qty: d.qty,
             revenue: d.revenue
         }));
@@ -534,7 +539,7 @@ function openDB() {
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
-}
+};
 
 async function putRecord(record) {
   const db = await openDB();
@@ -544,7 +549,7 @@ async function putRecord(record) {
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
-}
+};
 
 async function getRecord(id) {
   const db = await openDB();
@@ -554,7 +559,7 @@ async function getRecord(id) {
     req.onsuccess = () => resolve(req.result ?? null);
     req.onerror = () => reject(req.error);
   });
-}
+};
 
 async function loadFromIndexedDB() {
   const record = await getRecord("salesData");
@@ -569,12 +574,11 @@ async function loadFromIndexedDB() {
     revenue: d.revenue
   })).sort((a, b) => a.order_date - b.order_date);
 
+//   console.log(salesData)
   uniqueItems = [...new Set(salesData.map(d => d.item_id))].sort();
   updateSearchResults();
   render();
-}
-
-
+};
 
 /// chart functions
 
@@ -719,10 +723,15 @@ function renderChart(data, selectedItems) {
         .call(d3.axisBottom(x));
 
     // Y Axis
+    const yAxis = d3.axisLeft(y)
+        .ticks(6)
+        .tickFormat(d=> {
+            if (d>=1000 && d<100000) return `${Math.round(d/1000)}k`;
+        });
     svg.append("g")
-        // .attr("transform", `translate(20,0)`)
+        // .attr("transform", `translate(5,0)`)
         .attr("class", "axis")
-        .call(d3.axisLeft(y));
+        .call(yAxis);
 
     // Line generator
     const line = d3.line()
