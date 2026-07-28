@@ -118,6 +118,7 @@ function resetTextArea() {
     textArea.placeholder = "Paste whole item ids here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
 }
 resetTextArea()
+
 let output = document.querySelector("#output")
 output.innerText = "No Data -- import csv"
 
@@ -128,26 +129,35 @@ function clearSearch() {
     resetTextArea()
 }
 
-
-let itemData = [];
+let supplierData = [];
 let uniqueItems = [];
 
 // Handle file input change
-d3.select('#fileInput').on('change', function () {
+d3.select('#fileInput').on('change', async function () {
     const file = this.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            const content = e.target.result;
-            itemData = d3.csvParse(content, d => ({
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        const content = e.target.result;
+        try {
+            supplierData = d3.csvParse(content, d => ({
                 item_id: d.item_id,
                 supplier_name: d.supplier_name,
                 cost: d.cost
             }));
-        };
-        reader.readAsText(file);
-        output.innerText = "Data Loaded -- paste item_id in text area"
-    }
+
+            await putRecord({
+                id: "supplierData",
+                data: supplierData
+            });
+
+            output.innerText = "Data Loaded -- paste item_id in text area"
+        } catch (error) {
+            output.innerText = `CSV parse error: ${error.messge}`;
+        }
+    };
+    reader.readAsText(file);
 });
 
 // Handle search input
@@ -169,7 +179,7 @@ d3.select("#searchInput").on("input", function () {
     itemList.selectAll("*").remove();
 
     searchValues.forEach(itemId => {
-        const rows = itemData.filter(d => d.item_id === itemId);
+        const rows = supplierData.filter(d => d.item_id === itemId);
         if (rows.length === 0) return;
 
         const itemLi = d3.create('ul').node();
@@ -190,6 +200,56 @@ d3.select("#searchInput").on("input", function () {
     console.log(searchValues)
 
 });
+
+
+//// idb functions
+
+const DB_NAME = "myApp";
+const DB_VERSION = 1;
+const STORE_NAME = "data";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        // keypath "id" so we can upsert by id
+        db.createObjectStore(STORE_NAME, {keyPath: "id"});
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  })
+};
+
+async function putRecord(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(record);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+};
+
+async function getRecord(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(id);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
+  });
+};
+
+async function loadFromIndexedDB() {
+  const record = await getRecord("allActiveItems");
+  if (!record || !Array.isArray(record.data)) return;
+  allItems = record.data
+  output.innerText = "Data Loaded -- paste item_id in text area"
+}
+loadFromIndexedDB()
 </script>
 </body>
 </html>
