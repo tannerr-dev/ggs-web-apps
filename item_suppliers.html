@@ -113,7 +113,7 @@ h2 {
 
 <script>
 function resetTextArea() {
-    textArea = document.getElementById('searchInput')
+    let textArea = document.getElementById('searchInput')
     textArea.value = ""
     textArea.placeholder = "Paste whole item ids here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
 }
@@ -146,6 +146,7 @@ d3.select('#fileInput').on('change', async function () {
                 supplier_name: d.supplier_name,
                 cost: d.cost
             }));
+            console.log(supplierData)
 
             await putRecord({
                 id: "supplierData",
@@ -154,7 +155,7 @@ d3.select('#fileInput').on('change', async function () {
 
             output.innerText = "Data Loaded -- paste item_id in text area"
         } catch (error) {
-            output.innerText = `CSV parse error: ${error.messge}`;
+            output.innerText = `CSV parse error: ${error.message}`;
         }
     };
     reader.readAsText(file);
@@ -191,10 +192,14 @@ d3.select("#searchInput").on("input", function () {
             .data(rows)
             .enter()
             .append('tr')
-            .html(d => `<td class="item_id">${itemId}</td><td class="item_cost">${d.cost}</td><td class="item_supplier">${d.supplier_name}</td>`);
-
+            .html(d => `
+                <td class="item_id">${itemId}</td>
+                <td class="item_cost">${d.cost}</td>
+                <td class="item_supplier">${d.supplier_name}</td>
+            `);
         itemLi.appendChild(table.node());
         itemList.node().appendChild(itemLi);
+        console.log(rows)
     });
 
     console.log(searchValues)
@@ -244,12 +249,14 @@ async function getRecord(id) {
 };
 
 async function loadFromIndexedDB() {
-  const record = await getRecord("allActiveItems");
+  const record = await getRecord("supplierData");
   if (!record || !Array.isArray(record.data)) return;
-  allItems = record.data
+  supplierData = record.data;
   output.innerText = "Data Loaded -- paste item_id in text area"
 }
-loadFromIndexedDB()
+
+loadFromIndexedDB();
+
 </script>
 </body>
 </html>
