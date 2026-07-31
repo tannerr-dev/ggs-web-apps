@@ -40,7 +40,7 @@ body {
     font-family: Arial, sans-serif;
     background-color: var(--bg);
     color: var(--fg);
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
 main {
@@ -350,7 +350,7 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', eve
     setTheme()
 });
 
-const margin = { top: 20, right: 30, bottom: 30, left: 40 };
+const margin = { top: 20, right: 30, bottom: 30, left: 50 };
 const width = +d3.select("svg").attr("width") - margin.left - margin.right;
 const height = +d3.select("svg").attr("height") - margin.top - margin.bottom;
 
@@ -671,6 +671,7 @@ function render() {
 };
 
 function renderChart(data, selectedItems) {
+    // filter data down to only selected items first
     const filteredData = data.filter(d => selectedItems.includes(d.item_id));
 
     // Aggregating data by month
@@ -685,16 +686,14 @@ function renderChart(data, selectedItems) {
     //     return Array.from(itemData, ([itemId, qty]) => ({ date, itemId, qty }));
     // }).flat();
 
+    // Normalize the aggregate, so zero months show as zeros not skipped like above agg
     // 1) all items that appear anywhere in your data
     const allItemIds = new Set(filteredData.map(d => d.item_id));
-
     // 2) month range to cover (from min to max order_date)
     const monthStart = d3.timeMonth.floor(d3.min(filteredData, d => d.order_date));
     const monthEnd   = d3.timeMonth.floor(d3.max(filteredData, d => d.order_date));
-
     // If you want a fixed range instead, replace with your own start/end.
     const months = d3.timeMonth.range(monthStart, d3.timeMonth.offset(monthEnd, 1));
-
     // 3) build full grid: every month x every itemId, qty=0 if missing
     const monthlySales = months.flatMap(date => {
         const itemMap = aggregatedData.get(date); // Map<itemId, qty> or undefined
@@ -706,6 +705,7 @@ function renderChart(data, selectedItems) {
     });
     // console.log('monthlySales', monthlySales);
 
+    // start plotting
     const x = d3.scaleTime()
         .domain(d3.extent(monthlySales, d => d.date))
         .range([0, width]);
@@ -722,16 +722,18 @@ function renderChart(data, selectedItems) {
         .attr("transform", `translate(0,${height})`)
         .call(d3.axisBottom(x));
 
-    // Y Axis
-    const yAxis = d3.axisLeft(y)
-        .ticks(6)
-        .tickFormat(d=> {
-            if (d>=1000 && d<100000) return `${Math.round(d/1000)}k`;
-        });
+    // Y Axis, this hack almost worked for reformatting large numbers but broke when there was a mix of large and small
+    // const yAxis = d3.axisLeft(y)
+    //     .ticks(6)
+    //     .tickFormat(d=> {
+    //         if (d>=1000 && d<100000) return `${Math.round(d/1000)}k`;
+    //     });
+    
     svg.append("g")
         // .attr("transform", `translate(5,0)`)
         .attr("class", "axis")
-        .call(yAxis);
+        .call(d3.axisLeft(y));
+        // .call(yAxis);
 
     // Line generator
     const line = d3.line()
@@ -781,7 +783,7 @@ function renderChart(data, selectedItems) {
     });
 
     // Add Legend
-    const legendX = width-840;
+    const legendX = width-820;
     const legendY = 0;
     
     const legend = svg.append("g")
