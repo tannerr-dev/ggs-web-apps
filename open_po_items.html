@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/jpg" href="./assets/GLOBUS-WEB-FAVICON-07234.png">
+    <link rel="stylesheet" href="./assets/global.css">
+    <script src="./assets/d3.js"></script>
+    <!-- <script src="plot.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/d3@7"></script> -->
+    
+    <title>open po items</title>
+
+<style>
+main {
+    display: flex;
+    flex-direction: column;
+}
+
+section {
+    display: flex;
+    flex-direction: row;
+}
+
+input {
+    width:200px;
+}
+
+input[type="file"]::file-selector-button {
+    border: 1px solid var(--bg2);
+    border-radius: 4px;      
+    background-color: var(--bg2);
+    color: var(--fg);
+    margin: 0px 4px 8px 0px;
+}
+
+textarea {
+    height: 400px;
+    width: 200px;
+    /* padding: 2px; */
+    border-width: 0;
+    background-color: var(--bg2);
+    color: var(--fg);
+    border-radius: 4px;
+    scrollbar-color: hsl(0 0% 100% /0.2) hsl(0 0% 0% /0);
+    /* scrollbar-width: thin; */
+    /* scrollbar-gutter: stable both-edges; */
+    resize:none;  
+}
+
+button {
+    border: 1px solid var(--bg2);
+    border-radius: 4px;    
+    width: 204px;
+    background-color: var(--bg2);
+    color: var(--fg);
+    margin-bottom: 8px;
+}
+
+ul {
+    margin: 18px 0px 0px 0px;
+    padding: 0px;
+}
+
+table td, table th { 
+    padding: 0px 0px 0px 16px; 
+    font-size: 14px;
+
+}
+
+h2 {
+    font-size: 16px;
+    margin:4px;
+}
+
+.item_id {
+    width: 160px;
+}
+
+.item_cost{
+    width: 50px;
+}
+
+.item_supplier{
+    width: 500px;
+}
+#instructions {
+    width: 200px;
+}
+</style>
+</head>
+
+<body>
+    
+<main>
+    <a target="_blank"  href="./index.html"><h1>GGS</h1></a>
+    <section>
+        <div>
+            <!-- <div>
+                <button onclick="clearSearch()">Clear</button>
+            </div> -->
+            <!-- <textarea id="searchInput"></textarea> -->
+            <div id="instructions">
+                <input type="file" id="fileInput" accept=".csv" style="display: block;"/>
+                <div class="muted">Export <a target="_blank" href="https://gg-sql-01.globalglove.com/Reports/report/Finance/Active%20Item%20Suppliers">Active Item Suppliers</a> as a CSV and import into this page using the choose file input above.</div>
+                <label class="muted" style="display:block;margin:8px 0px">Enter item ids (newline separated)</label>
+            </div>
+        </div>
+        <div id="output"></div>
+        <div>this is a work in progress, not working rn</div>
+    </section>
+</main>
+
+
+<script>
+function resetTextArea() {
+    let textArea = document.getElementById('searchInput')
+    textArea.value = ""
+    textArea.placeholder = "Paste whole item ids here...\n\nWorks well with my item search tool...\n\nfind the item search and other tools here:\nggs.tannerr.com"
+}
+resetTextArea()
+
+let output = document.querySelector("#output")
+output.innerText = "No Data -- import csv"
+
+function clearSearch() {
+    document.getElementById("searchInput").value = ""
+    console.log('hello')
+    output.innerHTML = ""
+    resetTextArea()
+}
+
+let supplierData = [];
+let uniqueItems = [];
+
+// Handle file input change
+d3.select('#fileInput').on('change', async function () {
+    const file = this.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (e) {
+        const content = e.target.result;
+        try {
+            supplierData = d3.csvParse(content, d => ({
+                item_id: d.item_id,
+                supplier_name: d.supplier_name,
+                cost: d.cost
+            }));
+            console.log(supplierData)
+
+            await putRecord({
+                id: "supplierData",
+                data: supplierData
+            });
+
+            output.innerText = "Data Loaded -- paste item_id in text area"
+        } catch (error) {
+            output.innerText = `CSV parse error: ${error.message}`;
+        }
+    };
+    reader.readAsText(file);
+});
+
+// Handle search input
+d3.select("#searchInput").on("input", function () {
+    const searchInput = d3.select("#searchInput").property("value").toUpperCase();
+    const rawValues = searchInput.split("\n").map(s => s.trim()).filter(Boolean);
+    output.innerHTML = ""  
+    // remove duplicates but keep first occurrence order
+    const seen = new Set();
+    const searchValues = [];
+    for (const v of rawValues) {
+        if (!seen.has(v)) {
+            seen.add(v);
+            searchValues.push(v);
+        }
+    }
+
+    const itemList = d3.select("#output");
+    itemList.selectAll("*").remove();
+
+    searchValues.forEach(itemId => {
+        const rows = supplierData.filter(d => d.item_id === itemId);
+        if (rows.length === 0) return;
+
+        const itemLi = d3.create('ul').node();
+        // itemLi.appendChild(d3.create('h2').text(itemId).node());
+
+        const table = d3.create('table');
+        const tbody = table.append('tbody');
+        tbody.selectAll('tr')
+            .data(rows)
+            .enter()
+            .append('tr')
+            .html(d => `
+                <td class="item_id">${itemId}</td>
+                <td class="item_cost">${d.cost}</td>
+                <td class="item_supplier">${d.supplier_name}</td>
+            `);
+        itemLi.appendChild(table.node());
+        itemList.node().appendChild(itemLi);
+        console.log(rows)
+    });
+
+    console.log(searchValues)
+
+});
+
+
+//// idb functions
+
+const DB_NAME = "myApp";
+const DB_VERSION = 1;
+const STORE_NAME = "data";
+
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        // keypath "id" so we can upsert by id
+        db.createObjectStore(STORE_NAME, {keyPath: "id"});
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  })
+};
+
+async function putRecord(record) {
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put(record);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+};
+
+async function getRecord(id) {
+  const db = await openDB();
+  return new Promise((resolve, reject)=>{
+    const tx = db.transaction(STORE_NAME, "readonly");
+    const req = tx.objectStore(STORE_NAME).get(id);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
+  });
+};
+
+async function loadFromIndexedDB() {
+  const record = await getRecord("supplierData");
+  if (!record || !Array.isArray(record.data)) return;
+  supplierData = record.data;
+  output.innerText = "Data Loaded -- paste item_id in text area"
+}
+
+loadFromIndexedDB();
+
+</script>
+</body>
+</html>

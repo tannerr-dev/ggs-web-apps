@@ -34,17 +34,16 @@ html, body {
     scrollbar-color: hsla(0, 0%, 64%, 0.637) hsla(0, 0%, 97%, 0);
     scrollbar-width: thin;
     scrollbar-gutter: stable both-edges;
-}
-
-body {
+    color: var(--fg);
     font-family: Arial, sans-serif;
     background-color: var(--bg);
-    color: var(--fg);
-    /* overflow: hidden; */
 }
 
 main {
     max-width: 100%;
+}
+h1 {
+    font-size: 20px;
 }
 
 .layout {
@@ -120,10 +119,6 @@ main {
 
 .bottom-section {
     height: calc(var(--bottom-height));
-}
-
-h1 {
-    font-size: 10px;
 }
 
 .input-container {
@@ -297,6 +292,7 @@ svg text {
 
 <body class="layout">
 <main class="center">
+    <a target="_blank"  href="./index.html"><h1>GGS</h1></a>
     <div class="chart-container">
         <!-- <a href="./index.html"><h1>GGS</h1></a> -->
         <svg class="chart" width="920" height="480"></svg>
@@ -770,6 +766,7 @@ function renderChart(data, selectedItems) {
                     month: '2-digit', 
                     year: 'numeric' 
                 });
+                // can i insert the customer stats function here??
                 
                 tooltip
                     .style("opacity", 1)
