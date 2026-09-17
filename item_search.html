@@ -194,7 +194,12 @@ function searchItems(searchList) {
     }
     results.push(...matches);
   }
-  return results;
+  // return results.sort((a,b) => a.item_id.localeCompare(b.item_id));
+    return results.sort((a, b) => {
+    const numA = parseInt(a.item_id.match(/-(\d+)\(/)?.[1] || 0);
+    const numB = parseInt(b.item_id.match(/-(\d+)\(/)?.[1] || 0);
+    return numA - numB;
+  });
 }
 
 // TODO
@@ -220,7 +225,7 @@ const doSearchAndRender = () => {
   }
   try {
     const ids = searchItems(list);
-    console.log(ids)
+    // console.log(ids)
     out.innerHTML = "";
     ids.forEach(id => {
       li = document.createElement("li")
