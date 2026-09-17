@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Page description for search engines">
+    <meta name="theme-color" content="#ffffff">
+    <title>IndexedDB Example</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <h1>IndexedDB Demo</h1>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h2>Add Item</h2>
+            <input type="text" id="itemName" placeholder="Item name">
+            <button id="addBtn">Add Item</button>
+        </section>
+
+        <section>
+            <h2>Items</h2>
+            <ul id="itemList"></ul>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 IndexedDB Demo</p>
+    </footer>
+
+    <script>
+        let db;
+
+        // Initialize IndexedDB
+        function initDB() {
+            const request = indexedDB.open('myDatabase', 1);
+
+            request.onerror = () => {
+                console.error('Database failed to open:', request.error);
+            };
+
+            request.onsuccess = () => {
+                db = request.result;
+                console.log('Database opened successfully');
+                displayItems();
+            };
+
+            request.onupgradeneeded = (event) => {
+                db = event.target.result;
+                
+                // Create object store if it doesn't exist
+                if (!db.objectStoreNames.contains('items')) {
+                    const objectStore = db.createObjectStore('items', { keyPath: 'id', autoIncrement: true });
+                    objectStore.createIndex('name', 'name', { unique: false });
+                }
+            };
+        }
+
+        // Add item to IndexedDB
+        function addItem() {
+            const name = document.getElementById('itemName').value.trim();
+            
+            if (!name) {
+                alert('Please enter an item name');
+                return;
+            }
+
+            const transaction = db.transaction(['items'], 'readwrite');
+            const objectStore = transaction.objectStore('items');
+            
+            const newItem = {
+                name: name,
+                createdAt: new Date().toISOString()
+            };
+
+            const request = objectStore.add(newItem);
+
+            request.onsuccess = () => {
+                console.log('Item added successfully');
+                document.getElementById('itemName').value = '';
+                displayItems();
+            };
+
+            request.onerror = () => {
+                console.error('Failed to add item:', request.error);
+            };
+        }
+
+        // Display all items
+        function displayItems() {
+            const transaction = db.transaction(['items'], 'readonly');
+            const objectStore = transaction.objectStore('items');
+            const request = objectStore.getAll();
+
+            request.onsuccess = () => {
+                const items = request.result;
+                const itemList = document.getElementById('itemList');
+                itemList.innerHTML = '';
+
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${item.name}</span>
+                        <small>${new Date(item.createdAt).toLocaleString()}</small>
+                        <button onclick="deleteItem(${item.id})">Delete</button>
+                    `;
+                    itemList.appendChild(li);
+                });
+            };
+        }
+
+        // Delete item from IndexedDB
+        function deleteItem(id) {
+            const transaction = db.transaction(['items'], 'readwrite');
+            const objectStore = transaction.objectStore('items');
+            const request = objectStore.delete(id);
+
+            request.onsuccess = () => {
+                console.log('Item deleted successfully');
+                displayItems();
+            };
+
+            request.onerror = () => {
+                console.error('Failed to delete item:', request.error);
+            };
+        }
+
+        // Event listeners
+        document.getElementById('addBtn').addEventListener('click', addItem);
+        document.getElementById('itemName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') addItem();
+        });
+
+        // Initialize database on page load
+        initDB();
+    </script>
+</body>
+</html>
