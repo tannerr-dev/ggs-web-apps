@@ -42,8 +42,9 @@ button {
     border-radius: 4px;    
     background-color: var(--bg2);
     color: var(--fg);
-    margin-bottom:8px;
+    /* margin-bottom:8px; */
     width: 60px;
+
 }
 .clear_btn {
     width: 98px;
@@ -83,6 +84,16 @@ label {
 #instructions {
     width: 200px;
 }
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.input-btns{
+    padding-bottom:8px;
+}
+
 </style>
 </head>
 
@@ -92,7 +103,7 @@ label {
     <a target="_blank" href="./index.html"><h1>GGS</h1></a>
     <section>
         <div>
-            <div>
+            <div class="input-btns">
                 <button onclick="clearSearch()" class="clear_btn">Clear All</button>
             </div>
             <textarea id="searchInput"></textarea>
@@ -233,8 +244,9 @@ function renderChecklist(processedLines, dedupedItems) {
         const row = document.createElement("div");
         row.style.display = "flex";
         row.style.alignItems = "center";
-        row.style.gap = "8px";
-        row.style.margin = "6px 0";
+        row.style.justifyContent = "center";
+        row.style.gap = "4px";
+        row.style.margin = "12px 0";
 
         const id = idForTextEncoded(trimmed, itemIndex);
         const checkbox = document.createElement("input");
